@@ -213,12 +213,6 @@ permalink: /
                             <span>課題・メモ</span>
                             <span id="todo-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                         </button>
-
-                        <!-- 印刷ボタン -->
-                        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all shadow-xs">
-                            <i class="fa-solid fa-print"></i>
-                            <span class="hidden sm:inline">印刷</span>
-                        </button>
                     </div>
                 </div>
 
@@ -390,29 +384,33 @@ permalink: /
                     </div>
                 </div>
 
-                <!-- 課題・To-Do セクション -->
+                <!-- 課題セクション -->
                 <div>
                     <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
                         <i class="fa-solid fa-list-check text-indigo-600"></i>
-                        課題・To-Do タスク
+                        課題
                     </h3>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="modal-todo-input" placeholder="新しい課題・持ち物を追加..." 
+                    <div class="flex flex-col sm:flex-row gap-2 mb-2">
+                        <input type="text" id="modal-todo-input" placeholder="新しい課題を追加..." 
                                class="flex-1 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all shrink-0">
-                            追加
-                        </button>
+                        <div class="flex gap-2">
+                            <input type="date" id="modal-todo-date" 
+                                   class="text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0">
+                            <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all shrink-0">
+                                追加
+                            </button>
+                        </div>
                     </div>
                     <ul id="modal-todo-list" class="space-y-1.5 max-h-36 overflow-y-auto">
                         <!-- 動的生成リスト -->
                     </ul>
                 </div>
 
-                <!-- 個人メモセクション -->
+                <!-- メモセクション -->
                 <div>
                     <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
                         <i class="fa-regular fa-note-sticky text-amber-500"></i>
-                        科目メモ (個人用)
+                        メモ
                     </h3>
                     <textarea id="modal-memo" rows="3" placeholder="教科書、持参物、評価方法などのメモを入力..."
                               class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
@@ -432,20 +430,20 @@ permalink: /
     </div>
 
 
-    <!-- 全課題・メモ一覧モーダル -->
+    <!-- 課題・メモ一覧モーダル -->
     <div id="todo-summary-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden no-print">
         <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden">
             <div class="p-4 sm:p-5 bg-indigo-900 text-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-indigo-300 text-lg sm:text-xl"></i>
-                    <h2 class="text-base sm:text-lg font-bold">全科目の課題・メモ一覧</h2>
+                    <h2 class="text-base sm:text-lg font-bold">課題・メモ一覧</h2>
                 </div>
                 <button id="todo-modal-close" class="text-white/80 hover:text-white">
                     <i class="fa-solid fa-xmark text-lg sm:text-xl"></i>
                 </button>
             </div>
             <div class="p-4 sm:p-6 max-h-[65vh] overflow-y-auto space-y-3" id="todo-summary-body">
-                <!-- 動的に集計されたTo-Doリストを表示 -->
+                <!-- 動的に集計された課題・メモを表示 -->
             </div>
             <div class="p-3.5 bg-slate-50 border-t border-slate-200 text-right">
                 <button id="todo-modal-close-btn" class="bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg">
@@ -552,6 +550,58 @@ permalink: /
         let subjectMemos = loadStoredData(STORAGE_KEY_MEMO);
         let subjectTodos = loadStoredData(STORAGE_KEY_TODO);
 
+        // 期限バッジHTML生成（視認性向上）
+        function getDueDateBadge(dueDateStr, completed) {
+            if (!dueDateStr) return '';
+
+            if (completed) {
+                return `<span class="text-[10px] text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-normal shrink-0">
+                    <i class="fa-regular fa-calendar-check mr-1"></i>${escapeHtml(dueDateStr)}
+                </span>`;
+            }
+
+            const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            const [y, m, d] = dueDateStr.split('-').map(Number);
+            const targetDate = new Date(y, m - 1, d);
+
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+            const dayOfWeek = dayNames[targetDate.getDay()];
+            const formattedDate = `${m}/${d}(${dayOfWeek})`;
+
+            if (diffDays < 0) {
+                // 期限切れ
+                const overdueDays = Math.abs(diffDays);
+                return `<span class="text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1 shrink-0 animate-pulse">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> ${overdueDays}日超過 (${formattedDate})
+                </span>`;
+            } else if (diffDays === 0) {
+                // 今日まで
+                return `<span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1 shrink-0">
+                    <i class="fa-solid fa-clock text-amber-600"></i> 今日まで (${formattedDate})
+                </span>`;
+            } else if (diffDays === 1) {
+                // 明日まで
+                return `<span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                    <i class="fa-regular fa-clock text-amber-500"></i> 明日まで (${formattedDate})
+                </span>`;
+            } else if (diffDays <= 3) {
+                // 3日以内
+                return `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                    <i class="fa-regular fa-calendar-days text-blue-500"></i> あと${diffDays}日 (${formattedDate})
+                </span>`;
+            } else {
+                // 余裕あり
+                return `<span class="text-[10px] text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                    <i class="fa-regular fa-calendar text-slate-400"></i> あと${diffDays}日 (${formattedDate})
+                </span>`;
+            }
+        }
+
         // 時間割の初期化とレンダリング
         function renderTimetable() {
             const bodyContainer = document.getElementById('timetable-body');
@@ -628,7 +678,7 @@ permalink: /
                         const isMatch = matchesSearch && matchesCategory;
                         const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
 
-                        // ToDo件数計算
+                        // 課題件数計算
                         const subjectKey = `${item.day}_${item.period}`;
                         const todos = subjectTodos[subjectKey] || [];
                         const pendingTodos = todos.filter(t => !t.completed).length;
@@ -654,12 +704,12 @@ permalink: /
                                     </h4>
                                 </div>
 
-                                <!-- 担当教員 & ToDoバッジ -->
+                                <!-- 担当教員 & 課題バッジ -->
                                 <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-600 font-medium pt-1 mt-1 border-t border-slate-200/60">
                                     <span class="truncate max-w-[85px] sm:max-w-[100px]">
                                         <i class="fa-solid fa-user-tie text-[9px] text-slate-400 mr-0.5"></i>${item.teacher}
                                     </span>
-                                    ${pendingTodos > 0 ? `<span class="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="未完了タスク">${pendingTodos}</span>` : ''}
+                                    ${pendingTodos > 0 ? `<span class="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="未完了課題">${pendingTodos}</span>` : ''}
                                 </div>
                             </div>
                         `;
@@ -780,8 +830,9 @@ permalink: /
             const catBadge = document.getElementById('modal-category-badge');
             catBadge.innerText = catInfo.name;
 
-            // メモとTo-Doの復元
+            // メモと課題の復元
             document.getElementById('modal-memo').value = subjectMemos[subjectKey] || '';
+            document.getElementById('modal-todo-date').value = '';
             renderModalTodoList(subjectKey);
 
             // モーダル表示アニメーション
@@ -805,7 +856,7 @@ permalink: /
             }, 150);
         }
 
-        // モーダル内のToDo一覧描画
+        // モーダル内の課題一覧描画
         function renderModalTodoList(subjectKey) {
             const listEl = document.getElementById('modal-todo-list');
             listEl.innerHTML = '';
@@ -813,27 +864,33 @@ permalink: /
             const todos = subjectTodos[subjectKey] || [];
 
             if (todos.length === 0) {
-                listEl.innerHTML = `<li class="text-xs text-slate-400 italic py-1">登録されている課題・タスクはありません</li>`;
+                listEl.innerHTML = `<li class="text-xs text-slate-400 italic py-1">登録されている課題はありません</li>`;
                 return;
             }
 
             todos.forEach((todo, index) => {
                 const li = document.createElement('li');
-                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs';
+                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs gap-2 hover:bg-slate-100/80 transition-colors';
+                
+                const dateBadgeHtml = getDueDateBadge(todo.dueDate, todo.completed);
+
                 li.innerHTML = `
-                    <label class="flex items-center gap-2 cursor-pointer flex-1">
-                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})" class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}">${escapeHtml(todo.text)}</span>
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
+                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate">${escapeHtml(todo.text)}</span>
                     </label>
-                    <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        ${dateBadgeHtml}
+                        <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1 transition-colors" title="削除">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 `;
                 listEl.appendChild(li);
             });
         }
 
-        // ToDo状態更新
+        // 課題の完了状態更新
         function toggleTodoState(subjectKey, index) {
             if (subjectTodos[subjectKey] && subjectTodos[subjectKey][index]) {
                 subjectTodos[subjectKey][index].completed = !subjectTodos[subjectKey][index].completed;
@@ -843,7 +900,17 @@ permalink: /
             }
         }
 
-        // ToDo削除
+        // 課題・メモ一覧からの課題完了状態更新
+        function toggleTodoStateFromSummary(subjectKey, index) {
+            if (subjectTodos[subjectKey] && subjectTodos[subjectKey][index]) {
+                subjectTodos[subjectKey][index].completed = !subjectTodos[subjectKey][index].completed;
+                saveStoredData(STORAGE_KEY_TODO, subjectTodos);
+                openTodoSummaryModal();
+                renderTimetable();
+            }
+        }
+
+        // 課題削除
         function deleteTodo(subjectKey, index) {
             if (subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey].splice(index, 1);
@@ -853,11 +920,33 @@ permalink: /
             }
         }
 
-        // ToDo追加
+        // 課題・メモ一覧からの課題削除
+        function deleteTodoFromSummary(subjectKey, index) {
+            if (subjectTodos[subjectKey]) {
+                subjectTodos[subjectKey].splice(index, 1);
+                saveStoredData(STORAGE_KEY_TODO, subjectTodos);
+                openTodoSummaryModal();
+                renderTimetable();
+            }
+        }
+
+        // 課題・メモ一覧からのメモ削除
+        function deleteMemoFromSummary(subjectKey) {
+            if (subjectMemos[subjectKey]) {
+                delete subjectMemos[subjectKey];
+                saveStoredData(STORAGE_KEY_MEMO, subjectMemos);
+                openTodoSummaryModal();
+                renderTimetable();
+            }
+        }
+
+        // 課題追加
         function addTodoItem() {
             if (!activeSelectedSubject) return;
             const input = document.getElementById('modal-todo-input');
+            const dateInput = document.getElementById('modal-todo-date');
             const text = input.value.trim();
+            const dueDate = dateInput.value;
             if (!text) return;
 
             const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
@@ -865,14 +954,20 @@ permalink: /
                 subjectTodos[subjectKey] = [];
             }
 
-            subjectTodos[subjectKey].push({ text: text, completed: false, createdAt: new Date().toISOString() });
+            subjectTodos[subjectKey].push({
+                text: text,
+                dueDate: dueDate || '',
+                completed: false,
+                createdAt: new Date().toISOString()
+            });
             saveStoredData(STORAGE_KEY_TODO, subjectTodos);
             input.value = '';
+            dateInput.value = '';
             renderModalTodoList(subjectKey);
             renderTimetable();
         }
 
-        // 全ToDoの件数バッジ更新
+        // 全課題の件数バッジ更新
         function updateTodoBadgeCount() {
             let totalUncompleted = 0;
             Object.values(subjectTodos).forEach(list => {
@@ -888,12 +983,15 @@ permalink: /
             }
         }
 
-        // 全課題・メモサマリー表示
+        // 課題・メモ一覧表示
         function openTodoSummaryModal() {
             const body = document.getElementById('todo-summary-body');
             body.innerHTML = '';
 
             let hasItems = false;
+
+            // 課題を集計し、期限が近い順（未完了優先）に並び替え
+            const aggregatedItems = [];
 
             timetableData.forEach(item => {
                 if (item.subject === 'なし') return;
@@ -905,42 +1003,93 @@ permalink: /
                     hasItems = true;
                     const dayObj = DAYS.find(d => d.code === item.day);
 
-                    const section = document.createElement('div');
-                    section.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200';
+                    // 各課題にオリジナルインデックスを付与
+                    const sortedTodos = todos.map((t, origIdx) => ({ ...t, origIdx }));
                     
-                    let todosHtml = '';
-                    if (todos.length > 0) {
-                        todosHtml = `
-                            <div class="mt-2 space-y-1">
-                                ${todos.map(t => `
-                                    <div class="flex items-center gap-2 text-xs">
-                                        <i class="fa-solid ${t.completed ? 'fa-check text-emerald-500' : 'fa-circle-notch text-amber-500'}"></i>
-                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${escapeHtml(t.text)}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        `;
-                    }
+                    // 期限が早い順にソート（未完了優先、日付設定なしは後回し）
+                    sortedTodos.sort((a, b) => {
+                        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                        if (!a.dueDate) return 1;
+                        if (!b.dueDate) return -1;
+                        return a.dueDate.localeCompare(b.dueDate);
+                    });
 
-                    let memoHtml = '';
-                    if (memo.trim()) {
-                        memoHtml = `
-                            <div class="mt-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-200">
-                                <i class="fa-regular fa-note-sticky text-amber-500 mr-1"></i>${escapeHtml(memo)}
-                            </div>
-                        `;
-                    }
-
-                    section.innerHTML = `
-                        <div class="flex items-center justify-between border-b pb-1.5 border-slate-200">
-                            <span class="font-bold text-slate-800 text-xs sm:text-sm">${item.subject}</span>
-                            <span class="text-[11px] font-medium text-slate-500">${dayObj.name} ${item.period}限</span>
-                        </div>
-                        ${todosHtml}
-                        ${memoHtml}
-                    `;
-                    body.appendChild(section);
+                    aggregatedItems.push({
+                        item,
+                        subjectKey,
+                        dayObj,
+                        todos: sortedTodos,
+                        memo
+                    });
                 }
+            });
+
+            // 提出期限が緊急な課題がある科目を上位に配置
+            aggregatedItems.sort((a, b) => {
+                const getEarliestDueDate = (itemObj) => {
+                    const uncompleted = itemObj.todos.filter(t => !t.completed && t.dueDate);
+                    if (uncompleted.length === 0) return '9999-99-99';
+                    return uncompleted[0].dueDate;
+                };
+                return getEarliestDueDate(a).localeCompare(getEarliestDueDate(b));
+            });
+
+            aggregatedItems.forEach(({ item, subjectKey, dayObj, todos, memo }) => {
+                const section = document.createElement('div');
+                section.className = 'bg-slate-50 p-3.5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all';
+                
+                let todosHtml = '';
+                if (todos.length > 0) {
+                    todosHtml = `
+                        <div class="mt-2.5 space-y-1.5">
+                            ${todos.map((t) => {
+                                const dateBadgeHtml = getDueDateBadge(t.dueDate, t.completed);
+
+                                return `
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-white p-2 rounded-lg border border-slate-200/80 text-xs">
+                                    <label class="flex items-center gap-2 min-w-0 flex-1 cursor-pointer">
+                                        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodoStateFromSummary('${subjectKey}',${t.origIdx})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
+                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate">${escapeHtml(t.text)}</span>
+                                    </label>
+                                    <div class="flex items-center justify-between sm:justify-end gap-1.5 shrink-0 pl-6 sm:pl-0">
+                                        ${dateBadgeHtml}
+                                        <button onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})" class="text-slate-400 hover:text-rose-500 px-1 transition-colors" title="課題を削除">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                let memoHtml = '';
+                if (memo.trim()) {
+                    memoHtml = `
+                        <div class="mt-2.5 text-xs text-slate-700 bg-amber-50/60 p-2.5 rounded-lg border border-amber-200/70 flex items-start justify-between gap-2">
+                            <div class="break-all">
+                                <i class="fa-regular fa-note-sticky text-amber-600 mr-1.5"></i>${escapeHtml(memo)}
+                            </div>
+                            <button onclick="deleteMemoFromSummary('${subjectKey}')" class="text-slate-400 hover:text-rose-500 px-1 shrink-0 transition-colors" title="メモを削除">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                section.innerHTML = `
+                    <div class="flex items-center justify-between border-b pb-2 border-slate-200/80">
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full ${CATEGORIES[item.category]?.bg || 'bg-slate-400'}"></span>
+                            ${item.subject}
+                        </span>
+                        <span class="text-[11px] font-medium text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">${dayObj.name} ${item.period}限</span>
+                    </div>
+                    ${todosHtml}
+                    ${memoHtml}
+                `;
+                body.appendChild(section);
             });
 
             if (!hasItems) {
@@ -994,7 +1143,7 @@ permalink: /
                 if (e.key === 'Enter') addTodoItem();
             });
 
-            // ToDoサマリーモーダル
+            // 全課題・メモモーダル
             document.getElementById('todo-list-btn').addEventListener('click', openTodoSummaryModal);
             document.getElementById('todo-modal-close').addEventListener('click', () => {
                 document.getElementById('todo-summary-modal').classList.add('hidden');
