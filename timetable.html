@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仙台高専 令和8年度後期時間割 | 4年 ITコース</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        nit: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            500: '#102a43',
+                            600: '#0b69a3',
+                            700: '#035388',
+                            800: '#014361',
+                            900: '#00214d',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(59, 130, 246, 0.5), inset 0 0 5px rgba(59, 130, 246, 0.3)' },
+                            '100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.9), inset 0 0 10px rgba(59, 130, 246, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 印刷設定 */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 11pt;
+            }
+            .print-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+            .timetable-grid {
+                display: grid !important;
+                grid-template-columns: 80px repeat(5, 1fr) !important;
+                gap: 1px !important;
+                background-color: #cbd5e1 !important;
+                border: 1px solid #94a3b8 !important;
+            }
+            .subject-card {
+                break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                background: white !important;
+                color: black !important;
+                padding: 6px !important;
+            }
+            .print-header {
+                display: block !important;
+                margin-bottom: 15px;
+            }
+            .badge-print {
+                border: 1px solid #64748b !important;
+                color: #0f172a !important;
+                background: #f1f5f9 !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+
+    <!-- ヘッダー -->
+    <header class="bg-gradient-to-r from-slate-900 via-nit-900 to-indigo-950 text-white shadow-lg sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+                
+                <!-- タイトルエリア -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400 text-lg sm:text-xl font-bold shadow-inner backdrop-blur-sm shrink-0">
+                        <i class="fa-solid font-mono">IT</i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">令和8年度 後期</span>
+                            <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">仙台高等専門学校</span>
+                        </div>
+                        <h1 class="text-lg sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2 mt-0.5">
+                            4年 ITコース <span class="text-xs sm:text-sm font-normal text-slate-300">(4年IT)</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- 担任＆リアルタイム時計・ステータス -->
+                <div class="flex items-center justify-between md:justify-end gap-2 pt-1.5 md:pt-0 border-t md:border-t-0 border-slate-800/80 text-xs">
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 text-[11px] sm:text-xs">
+                        <i class="fa-solid fa-user-tie text-blue-400"></i>
+                        <span class="text-slate-400">担任:</span>
+                        <span class="font-semibold text-slate-200">小林（秀）</span>
+                    </div>
+
+                    <!-- リアルタイム時計 -->
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 text-[11px] sm:text-xs text-slate-300">
+                        <i class="fa-regular fa-clock text-amber-400 animate-pulse"></i>
+                        <span id="current-time-display" class="font-mono font-medium">--:--:--</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- コントロールバー & フィルター -->
+    <div class="bg-white border-b border-slate-200 shadow-sm sticky top-[57px] sm:top-[73px] z-20 no-print">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                
+                <!-- 検索 & フィルター -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <!-- 検索ボックス -->
+                        <div class="relative flex-1 sm:w-60">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="search-input" placeholder="科目・教員・教室名で検索..." 
+                                   class="w-full pl-8 pr-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+                        </div>
+
+                        <!-- カテゴリフィルター -->
+                        <select id="category-filter" class="py-1.5 px-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 shrink-0">
+                            <option value="all">全区分</option>
+                            <option value="REQUIRED">必修</option>
+                            <option value="ELECTIVE">選択</option>
+                        </select>
+                    </div>
+
+                    <!-- 曜日選択（スマホ表示用タブ） -->
+                    <div class="flex sm:hidden rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-medium w-full justify-between">
+                        <button class="day-tab-btn active flex-1 py-1 text-center rounded-md text-slate-700 bg-white shadow-xs font-bold" data-day="all">全日</button>
+                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Mon">月</button>
+                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Tue">火</button>
+                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Wed">水</button>
+                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Thu">木</button>
+                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Fri">金</button>
+                    </div>
+                </div>
+
+                <!-- トグル & アクションボタン -->
+                <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+                    <!-- 現在授業ハイライト トグル -->
+                    <label class="inline-flex items-center cursor-pointer bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 transition-all select-none">
+                        <input type="checkbox" id="toggle-highlight" class="sr-only peer" checked>
+                        <div class="relative w-7 h-3.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-1.5 text-[11px] sm:text-xs font-medium">現在コマ強調</span>
+                    </label>
+
+                    <div class="flex items-center gap-1.5">
+                        <!-- デモ用：時限シミュレーターボタン -->
+                        <button id="sim-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-sliders text-blue-600"></i>
+                            <span class="hidden sm:inline">時間テスト</span>
+                        </button>
+
+                        <!-- 課題・メモ一覧ダイアログボタン -->
+                        <button id="todo-list-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all relative">
+                            <i class="fa-solid fa-check-double text-indigo-600"></i>
+                            <span>課題・メモ</span>
+                            <span id="todo-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                        </button>
+
+                        <!-- 印刷ボタン -->
+                        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all shadow-xs">
+                            <i class="fa-solid fa-print"></i>
+                            <span class="hidden sm:inline">印刷</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 現在の授業案内バー (アクティブ時表示) -->
+    <div id="current-subject-banner" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-2 text-xs sm:text-sm shadow-md hidden no-print transition-all">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 truncate">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                <span class="font-bold text-[10px] sm:text-xs uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded shrink-0">開講中</span>
+                <span id="current-banner-text" class="font-medium truncate">現在 [1限] 国語Ⅳ (2-102) が行われています</span>
+            </div>
+            <button id="banner-focus-btn" class="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded shrink-0 transition-all">
+                位置を見る
+            </button>
+        </div>
+    </div>
+
+    <!-- シミュレーターコントロールパネル (非表示/トグル) -->
+    <div id="sim-panel" class="bg-amber-50 border-b border-amber-200 p-3 hidden no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 font-semibold text-amber-800">
+                <i class="fa-solid fa-flask"></i> 時間割シミュレーター（動作テスト用）
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <label class="flex items-center gap-1">
+                    曜日:
+                    <select id="sim-day" class="bg-white border border-amber-300 rounded px-2 py-1">
+                        <option value="1">月曜日</option>
+                        <option value="2">火曜日</option>
+                        <option value="3">水曜日</option>
+                        <option value="4">木曜日</option>
+                        <option value="5">金曜日</option>
+                    </select>
+                </label>
+                <label class="flex items-center gap-1">
+                    時間:
+                    <input type="time" id="sim-time" value="09:00" class="bg-white border border-amber-300 rounded px-2 py-1">
+                </label>
+                <button id="sim-apply-btn" class="bg-amber-600 text-white px-2.5 py-1 rounded font-medium hover:bg-amber-700">適用</button>
+                <button id="sim-reset-btn" class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded font-medium hover:bg-slate-300">リセット</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインコンテンツエリア -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-6 print-container">
+
+        <!-- 印刷用ヘッダー (通常非表示) -->
+        <div class="hidden print-header text-center border-b pb-3 mb-4">
+            <h1 class="text-2xl font-bold">仙台高等専門学校 令和8年度後期授業時間割</h1>
+            <p class="text-base text-slate-700 mt-1">クラス：4年 ITコース（4IT） | 担任：小林（秀）</p>
+        </div>
+
+        <!-- 凡例 (カテゴリの説明) -->
+        <div class="flex items-center justify-between gap-2 mb-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs no-print text-xs">
+            <div class="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-tags text-slate-400"></i> 科目区分:
+            </div>
+            <div class="flex items-center gap-3 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    <span class="text-slate-700">必修</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                    <span class="text-slate-700">選択</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 時間割グリッド表示 -->
+        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+            <div id="timetable-scroll-container" class="overflow-x-auto">
+                <div id="timetable-wrapper" class="w-full transition-all">
+                    
+                    <!-- 時間割グリッド構造 -->
+                    <div id="timetable-grid" class="timetable-grid grid divide-x divide-y divide-slate-200 border-b border-slate-200">
+                        
+                        <!-- 左上角セル -->
+                        <div class="bg-slate-100 p-2 sm:p-3 flex flex-col justify-center items-center font-bold text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider">
+                            <span>時限</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-normal">時間帯</span>
+                        </div>
+
+                        <!-- 曜日ヘッダー -->
+                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Mon">
+                            <span class="text-blue-600 block sm:inline">月</span>
+                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Mon</span>
+                        </div>
+                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Tue">
+                            <span class="text-blue-600 block sm:inline">火</span>
+                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Tue</span>
+                        </div>
+                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Wed">
+                            <span class="text-blue-600 block sm:inline">水</span>
+                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Wed</span>
+                        </div>
+                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Thu">
+                            <span class="text-blue-600 block sm:inline">木</span>
+                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Thu</span>
+                        </div>
+                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Fri">
+                            <span class="text-blue-600 block sm:inline">金</span>
+                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Fri</span>
+                        </div>
+
+                        <!-- 1限〜5限 のセルがJSで動的に挿入 -->
+                        <div id="timetable-body" class="contents">
+                            <!-- JS側で時間割カードをレンダリング -->
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+
+    <!-- ==================== モーダルダイアログ群 ==================== -->
+
+    <!-- 科目詳細 & メモ・課題モーダル -->
+    <div id="subject-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all scale-95 opacity-0 modal-container">
+            
+            <!-- モーダルヘッダー -->
+            <div id="modal-header-bg" class="p-4 sm:p-5 text-white bg-gradient-to-r from-blue-600 to-indigo-600 relative">
+                <button id="modal-close-btn" class="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 w-8 h-8 rounded-full flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex items-center gap-2 mb-1 flex-wrap pr-8">
+                    <span id="modal-category-badge" class="bg-white/20 text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-semibold border border-white/30">
+                        必修
+                    </span>
+                    <span id="modal-period-badge" class="bg-black/20 text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-medium">
+                        月曜 1限 (8:50 - 10:20)
+                    </span>
+                </div>
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-bold mt-1">国語Ⅳ</h2>
+            </div>
+
+            <!-- モーダルボディ -->
+            <div class="p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[75vh] overflow-y-auto">
+                
+                <!-- 基本情報カード -->
+                <div class="grid grid-cols-2 gap-2.5 sm:gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                            <i class="fa-solid fa-user-chalkboard"></i>
+                        </div>
+                        <div class="truncate">
+                            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">担当教員</div>
+                            <div id="modal-teacher" class="font-bold text-slate-800 truncate">犬飼</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <div class="truncate">
+                            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">使用教室</div>
+                            <div id="modal-room" class="font-bold text-slate-800 truncate">2-102</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 課題・To-Do セクション -->
+                <div>
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
+                        <i class="fa-solid fa-list-check text-indigo-600"></i>
+                        課題・To-Do タスク
+                    </h3>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="modal-todo-input" placeholder="新しい課題・持ち物を追加..." 
+                               class="flex-1 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all shrink-0">
+                            追加
+                        </button>
+                    </div>
+                    <ul id="modal-todo-list" class="space-y-1.5 max-h-36 overflow-y-auto">
+                        <!-- 動的生成リスト -->
+                    </ul>
+                </div>
+
+                <!-- 個人メモセクション -->
+                <div>
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                        <i class="fa-regular fa-note-sticky text-amber-500"></i>
+                        科目メモ (個人用)
+                    </h3>
+                    <textarea id="modal-memo" rows="3" placeholder="教科書、持参物、評価方法などのメモを入力..."
+                              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+            </div>
+
+            <!-- モーダルフッター -->
+            <div class="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span class="text-[10px] sm:text-[11px] text-slate-400">※自動保存されます</span>
+                <button id="modal-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-xs">
+                    保存して閉じる
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- 全課題・メモ一覧モーダル -->
+    <div id="todo-summary-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden">
+            <div class="p-4 sm:p-5 bg-indigo-900 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-indigo-300 text-lg sm:text-xl"></i>
+                    <h2 class="text-base sm:text-lg font-bold">全科目の課題・メモ一覧</h2>
+                </div>
+                <button id="todo-modal-close" class="text-white/80 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg sm:text-xl"></i>
+                </button>
+            </div>
+            <div class="p-4 sm:p-6 max-h-[65vh] overflow-y-auto space-y-3" id="todo-summary-body">
+                <!-- 動的に集計されたTo-Doリストを表示 -->
+            </div>
+            <div class="p-3.5 bg-slate-50 border-t border-slate-200 text-right">
+                <button id="todo-modal-close-btn" class="bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // 時限の標準定義
+        const PERIODS = [
+            { id: 1, name: '1限', start: '08:50', end: '10:20' },
+            { id: 2, name: '2限', start: '10:30', end: '12:00' },
+            { id: 3, name: '3限', start: '12:50', end: '14:20' },
+            { id: 4, name: '4限', start: '14:30', end: '16:00' },
+            { id: 5, name: '5限', start: '16:10', end: '17:40' },
+        ];
+
+        // 曜日の標準定義
+        const DAYS = [
+            { code: 'Mon', name: '月曜日', short: '月' },
+            { code: 'Tue', name: '火曜日', short: '火' },
+            { code: 'Wed', name: '水曜日', short: '水' },
+            { code: 'Thu', name: '木曜日', short: '木' },
+            { code: 'Fri', name: '金曜日', short: '金' },
+        ];
+
+        // 科目カテゴリ設定 (必修・選択)
+        const CATEGORIES = {
+            REQUIRED: { name: '必修', color: 'blue', bg: 'bg-blue-600', text: 'text-blue-700', border: 'border-blue-300', lightBg: 'bg-blue-50/70' },
+            ELECTIVE: { name: '選択', color: 'emerald', bg: 'bg-emerald-600', text: 'text-emerald-700', border: 'border-emerald-300', lightBg: 'bg-emerald-50/70' },
+            OTHER: { name: 'その他', color: 'slate', bg: 'bg-slate-500', text: 'text-slate-700', border: 'border-slate-300', lightBg: 'bg-slate-50/70' }
+        };
+
+        // 時間割データ構造 (4年ITコース 令和8年度後期)
+        const timetableData = [
+            // 月曜日
+            { day: 'Mon', period: 1, subject: '国語Ⅳ', teacher: '犬飼', room: '2-102', category: 'ELECTIVE' },
+            { day: 'Mon', period: 2, subject: '応用数学Ｂ', teacher: '長谷部', room: '2-102', category: 'REQUIRED' },
+            { day: 'Mon', period: 3, subject: '人文科学', teacher: '朱', room: '2-102', category: 'ELECTIVE' },
+            { day: 'Mon', period: 4, subject: 'コンピュータシステム応用', teacher: '朱、力武', room: '11-301', category: 'REQUIRED' },
+            { day: 'Mon', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
+
+            // 火曜日
+            { day: 'Tue', period: 1, subject: '高周波回路', teacher: '小林(秀)、古市', room: '2-202', category: 'ELECTIVE' },
+            { day: 'Tue', period: 2, subject: 'マルチメディア情報', teacher: '矢島', room: '11-202', category: 'REQUIRED' },
+            { day: 'Tue', period: 3, subject: '総合英語Ⅱ', teacher: 'ワーナー川原', room: '6-201', category: 'ELECTIVE' },
+            { day: 'Tue', period: 4, subject: 'ネットワーク技術', teacher: '岩井、速水', room: '遠隔', category: 'REQUIRED' },
+            { day: 'Tue', period: 5, subject: 'フランス語', teacher: 'STANISLAS', room: '2-102', category: 'ELECTIVE' },
+
+            // 水曜日
+            { day: 'Wed', period: 1, subject: '情報セキュリティ', teacher: '和泉', room: '遠隔', category: 'REQUIRED' },
+            { day: 'Wed', period: 2, subject: '電磁波工学Ⅰ', teacher: '園田', room: '遠隔', category: 'ELECTIVE' },
+            { day: 'Wed', period: 3, subject: 'コンピュータシステム応用', teacher: '力武', room: '11-301', category: 'REQUIRED' },
+            { day: 'Wed', period: 4, subject: '法学憲法', teacher: '戸次、菅原', room: '遠隔', category: 'ELECTIVE' },
+            { day: 'Wed', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
+
+            // 木曜日
+            { day: 'Thu', period: 1, subject: '第Ⅰ類実験Ⅱ', teacher: '-', room: '-', category: 'REQUIRED' },
+            { day: 'Thu', period: 2, subject: '電子回路', teacher: '柏葉', room: '8-206', category: 'REQUIRED' },
+            { day: 'Thu', period: 3, subject: 'ICTシステム開発演習', teacher: '安藤、岡本、奥村、藤原', room: '8-401', category: 'REQUIRED' },
+            { day: 'Thu', period: 4, subject: 'IoT・エッジコンピューティング', teacher: '千葉、力武', room: '8-401', category: 'ELECTIVE' },
+            { day: 'Thu', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
+
+            // 金曜日
+            { day: 'Fri', period: 1, subject: '化学特論', teacher: '小松', room: '2-102', category: 'ELECTIVE' },
+            { day: 'Fri', period: 2, subject: '第Ⅰ類実験Ⅱ', teacher: '-', room: '-', category: 'REQUIRED' },
+            { day: 'Fri', period: 3, subject: '電気電子計測', teacher: '林(忠)', room: '2-102', category: 'REQUIRED' },
+            { day: 'Fri', period: 4, subject: 'ネットワークプログラミング', teacher: '小林(秀)', room: '8-401', category: 'ELECTIVE' },
+            { day: 'Fri', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
+        ];
+
+        // アプリケーション状態管理
+        let currentSimulatedTime = null; // nullなら実時間
+        let activeSelectedSubject = null;
+        let selectedDayFilter = 'all';
+
+        // LocalStorage キー
+        const STORAGE_KEY_MEMO = 'nit_4it_timetable_memos_v1';
+        const STORAGE_KEY_TODO = 'nit_4it_timetable_todos_v1';
+
+        // データの読み込み
+        function loadStoredData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : {};
+            } catch (e) {
+                console.error('Storage load error:', e);
+                return {};
+            }
+        }
+
+        // データの保存
+        function saveStoredData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error('Storage save error:', e);
+            }
+        }
+
+        let subjectMemos = loadStoredData(STORAGE_KEY_MEMO);
+        let subjectTodos = loadStoredData(STORAGE_KEY_TODO);
+
+        // 時間割の初期化とレンダリング
+        function renderTimetable() {
+            const bodyContainer = document.getElementById('timetable-body');
+            const gridContainer = document.getElementById('timetable-grid');
+            const wrapper = document.getElementById('timetable-wrapper');
+            bodyContainer.innerHTML = '';
+
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            const categoryFilter = document.getElementById('category-filter').value;
+
+            // スマホでの表示モード判定
+            const isMobile = window.innerWidth < 640;
+            const isSingleDayView = isMobile && selectedDayFilter !== 'all';
+
+            // グリッドレイアウトの最適化
+            if (isSingleDayView) {
+                gridContainer.className = 'timetable-grid grid grid-cols-2 divide-x divide-y divide-slate-200 border-b border-slate-200';
+                wrapper.className = 'w-full';
+            } else {
+                gridContainer.className = 'timetable-grid grid grid-cols-6 divide-x divide-y divide-slate-200 border-b border-slate-200';
+                wrapper.className = 'min-w-[650px] sm:min-w-full';
+            }
+
+            // 曜日ヘッダーの表示トグル
+            document.querySelectorAll('.day-header').forEach(header => {
+                const dayCode = header.dataset.dayCode;
+                if (selectedDayFilter === 'all' || selectedDayFilter === dayCode) {
+                    header.classList.remove('hidden');
+                } else {
+                    header.classList.add('hidden');
+                }
+            });
+
+            PERIODS.forEach(period => {
+                // 左端の時限ラベルセル
+                const periodLabelCell = document.createElement('div');
+                periodLabelCell.className = 'bg-slate-50 p-2 sm:p-3 flex flex-col justify-center items-center border-t border-slate-200 text-center select-none';
+                periodLabelCell.innerHTML = `
+                    <span class="font-extrabold text-slate-800 text-xs sm:text-base">${period.name}</span>
+                    <span class="text-[9px] sm:text-xs text-slate-500 font-mono mt-0.5 leading-tight">${period.start}<br class="sm:hidden">~ ${period.end}</span>
+                `;
+                bodyContainer.appendChild(periodLabelCell);
+
+                // 各曜日のセル
+                DAYS.forEach(day => {
+                    // 単一曜日選択時は不要な曜日をスキップ
+                    if (selectedDayFilter !== 'all' && selectedDayFilter !== day.code) {
+                        return;
+                    }
+
+                    const item = timetableData.find(d => d.day === day.code && d.period === period.id);
+                    const cell = document.createElement('div');
+                    
+                    cell.className = `p-1.5 sm:p-2.5 relative transition-all duration-200 flex flex-col`;
+                    cell.dataset.day = day.code;
+                    cell.dataset.period = period.id;
+
+                    if (!item || item.subject === 'なし') {
+                        // 空きコマ表示
+                        cell.innerHTML = `
+                            <div class="h-full min-h-[75px] sm:min-h-[110px] rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-1.5 flex flex-col items-center justify-center text-slate-300">
+                                <span class="text-[11px] sm:text-xs font-medium">空きコマ</span>
+                            </div>
+                        `;
+                    } else {
+                        // 検索・絞り込み一致フラグ
+                        const matchesSearch = !searchTerm || 
+                            item.subject.toLowerCase().includes(searchTerm) || 
+                            item.teacher.toLowerCase().includes(searchTerm) || 
+                            item.room.toLowerCase().includes(searchTerm);
+                        
+                        const matchesCategory = (categoryFilter === 'all' || item.category === categoryFilter);
+
+                        const isMatch = matchesSearch && matchesCategory;
+                        const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
+
+                        // ToDo件数計算
+                        const subjectKey = `${item.day}_${item.period}`;
+                        const todos = subjectTodos[subjectKey] || [];
+                        const pendingTodos = todos.filter(t => !t.completed).length;
+
+                        cell.innerHTML = `
+                            <div class="subject-card h-full min-h-[85px] sm:min-h-[115px] rounded-xl border ${catInfo.border} ${catInfo.lightBg} p-2 sm:p-2.5 flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 ${!isMatch ? 'opacity-30 grayscale-[50%]' : ''}"
+                                 onclick="openSubjectModal('${item.day}', ${item.period})">
+                                
+                                <div>
+                                    <!-- カテゴリバッジ & 部屋 -->
+                                    <div class="flex items-center justify-between gap-1 mb-1">
+                                        <span class="badge-print inline-block px-1.5 py-0.2 text-[9px] sm:text-[10px] font-bold rounded ${catInfo.bg} text-white shadow-xs">
+                                            ${catInfo.name}
+                                        </span>
+                                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 bg-white/80 px-1 py-0.2 rounded border border-slate-200 truncate max-w-[80px] sm:max-w-[90px]">
+                                            <i class="fa-solid fa-location-dot text-[9px] text-slate-400 mr-0.5"></i>${item.room}
+                                        </span>
+                                    </div>
+
+                                    <!-- 科目名 -->
+                                    <h4 class="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-2 leading-tight sm:leading-snug mt-0.5">
+                                        ${item.subject}
+                                    </h4>
+                                </div>
+
+                                <!-- 担当教員 & ToDoバッジ -->
+                                <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-600 font-medium pt-1 mt-1 border-t border-slate-200/60">
+                                    <span class="truncate max-w-[85px] sm:max-w-[100px]">
+                                        <i class="fa-solid fa-user-tie text-[9px] text-slate-400 mr-0.5"></i>${item.teacher}
+                                    </span>
+                                    ${pendingTodos > 0 ? `<span class="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="未完了タスク">${pendingTodos}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    bodyContainer.appendChild(cell);
+                });
+            });
+
+            // 現在進行中授業のハイライト処理を実行
+            updateCurrentTimeHighlight();
+            updateTodoBadgeCount();
+        }
+
+        // 現在の曜日・時間帯から開講中の授業を判定
+        function updateCurrentTimeHighlight() {
+            const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
+
+            // 時計表示を更新
+            const timeStr = now.toTimeString().split(' ')[0];
+            const daysStr = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('current-time-display').innerText = `${daysStr[now.getDay()]}曜 ${timeStr}`;
+
+            const isHighlightEnabled = document.getElementById('toggle-highlight').checked;
+            
+            // 既存のハイライト解除
+            document.querySelectorAll('.timetable-grid [data-day]').forEach(el => {
+                const card = el.querySelector('.subject-card');
+                if (card) {
+                    card.classList.remove('ring-4', 'ring-blue-500/80', 'ring-offset-2', 'z-10', 'animate-glow');
+                }
+            });
+
+            const banner = document.getElementById('current-subject-banner');
+
+            if (!isHighlightEnabled) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            const dayOfWeek = now.getDay(); // 0:日, 1:月... 5:金
+            const dayCodes = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const currentDayCode = dayCodes[dayOfWeek];
+
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                // 週末
+                banner.classList.add('hidden');
+                return;
+            }
+
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            // 時限を判定
+            let activePeriod = null;
+            PERIODS.forEach(p => {
+                const [sH, sM] = p.start.split(':').map(Number);
+                const [eH, eM] = p.end.split(':').map(Number);
+                const startMin = sH * 60 + sM;
+                const endMin = eH * 60 + eM;
+
+                if (currentMinutes >= startMin && currentMinutes <= endMin) {
+                    activePeriod = p.id;
+                }
+            });
+
+            if (activePeriod) {
+                const activeCell = document.querySelector(`[data-day="${currentDayCode}"][data-period="${activePeriod}"]`);
+                const activeData = timetableData.find(d => d.day === currentDayCode && d.period === activePeriod);
+
+                if (activeData && activeData.subject !== 'なし') {
+                    if (activeCell) {
+                        const card = activeCell.querySelector('.subject-card');
+                        if (card) {
+                            card.classList.add('ring-4', 'ring-blue-500/80', 'ring-offset-2', 'z-10', 'animate-glow');
+                        }
+                    }
+
+                    // バナー表示
+                    banner.classList.remove('hidden');
+                    document.getElementById('current-banner-text').innerText = 
+                        `現在開講中 [${activePeriod}限] ${activeData.subject} (${activeData.room} / 担当: ${activeData.teacher})`;
+                    
+                    document.getElementById('banner-focus-btn').onclick = () => {
+                        if (activeCell) {
+                            activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            // 表示中の曜日が違う場合は該当曜日に切り替え
+                            const dayBtn = document.querySelector(`.day-tab-btn[data-day="${currentDayCode}"]`);
+                            if (dayBtn) dayBtn.click();
+                        }
+                    };
+                } else {
+                    banner.classList.add('hidden');
+                }
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        // 詳細モーダルを開く
+        function openSubjectModal(dayCode, periodId) {
+            const item = timetableData.find(d => d.day === dayCode && d.period === periodId);
+            if (!item || item.subject === 'なし') return;
+
+            activeSelectedSubject = { day: dayCode, period: periodId, ...item };
+            const subjectKey = `${dayCode}_${periodId}`;
+            const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
+
+            // モーダルの表示設定
+            document.getElementById('modal-title').innerText = item.subject;
+            document.getElementById('modal-teacher').innerText = item.teacher;
+            document.getElementById('modal-room').innerText = item.room;
+
+            const dayObj = DAYS.find(d => d.code === dayCode);
+            const periodObj = PERIODS.find(p => p.id === periodId);
+            document.getElementById('modal-period-badge').innerText = `${dayObj.name} ${periodObj.name} (${periodObj.start} - ${periodObj.end})`;
+            
+            const catBadge = document.getElementById('modal-category-badge');
+            catBadge.innerText = catInfo.name;
+
+            // メモとTo-Doの復元
+            document.getElementById('modal-memo').value = subjectMemos[subjectKey] || '';
+            renderModalTodoList(subjectKey);
+
+            // モーダル表示アニメーション
+            const modal = document.getElementById('subject-modal');
+            const container = modal.querySelector('.modal-container');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        // モーダルを閉じる
+        function closeSubjectModal() {
+            const modal = document.getElementById('subject-modal');
+            const container = modal.querySelector('.modal-container');
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        // モーダル内のToDo一覧描画
+        function renderModalTodoList(subjectKey) {
+            const listEl = document.getElementById('modal-todo-list');
+            listEl.innerHTML = '';
+
+            const todos = subjectTodos[subjectKey] || [];
+
+            if (todos.length === 0) {
+                listEl.innerHTML = `<li class="text-xs text-slate-400 italic py-1">登録されている課題・タスクはありません</li>`;
+                return;
+            }
+
+            todos.forEach((todo, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs';
+                li.innerHTML = `
+                    <label class="flex items-center gap-2 cursor-pointer flex-1">
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})" class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}">${escapeHtml(todo.text)}</span>
+                    </label>
+                    <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        // ToDo状態更新
+        function toggleTodoState(subjectKey, index) {
+            if (subjectTodos[subjectKey] && subjectTodos[subjectKey][index]) {
+                subjectTodos[subjectKey][index].completed = !subjectTodos[subjectKey][index].completed;
+                saveStoredData(STORAGE_KEY_TODO, subjectTodos);
+                renderModalTodoList(subjectKey);
+                renderTimetable();
+            }
+        }
+
+        // ToDo削除
+        function deleteTodo(subjectKey, index) {
+            if (subjectTodos[subjectKey]) {
+                subjectTodos[subjectKey].splice(index, 1);
+                saveStoredData(STORAGE_KEY_TODO, subjectTodos);
+                renderModalTodoList(subjectKey);
+                renderTimetable();
+            }
+        }
+
+        // ToDo追加
+        function addTodoItem() {
+            if (!activeSelectedSubject) return;
+            const input = document.getElementById('modal-todo-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
+            if (!subjectTodos[subjectKey]) {
+                subjectTodos[subjectKey] = [];
+            }
+
+            subjectTodos[subjectKey].push({ text: text, completed: false, createdAt: new Date().toISOString() });
+            saveStoredData(STORAGE_KEY_TODO, subjectTodos);
+            input.value = '';
+            renderModalTodoList(subjectKey);
+            renderTimetable();
+        }
+
+        // 全ToDoの件数バッジ更新
+        function updateTodoBadgeCount() {
+            let totalUncompleted = 0;
+            Object.values(subjectTodos).forEach(list => {
+                totalUncompleted += list.filter(t => !t.completed).length;
+            });
+
+            const badge = document.getElementById('todo-badge');
+            if (totalUncompleted > 0) {
+                badge.innerText = totalUncompleted;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // 全課題・メモサマリー表示
+        function openTodoSummaryModal() {
+            const body = document.getElementById('todo-summary-body');
+            body.innerHTML = '';
+
+            let hasItems = false;
+
+            timetableData.forEach(item => {
+                if (item.subject === 'なし') return;
+                const subjectKey = `${item.day}_${item.period}`;
+                const todos = subjectTodos[subjectKey] || [];
+                const memo = subjectMemos[subjectKey] || '';
+
+                if (todos.length > 0 || memo.trim()) {
+                    hasItems = true;
+                    const dayObj = DAYS.find(d => d.code === item.day);
+
+                    const section = document.createElement('div');
+                    section.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200';
+                    
+                    let todosHtml = '';
+                    if (todos.length > 0) {
+                        todosHtml = `
+                            <div class="mt-2 space-y-1">
+                                ${todos.map(t => `
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <i class="fa-solid ${t.completed ? 'fa-check text-emerald-500' : 'fa-circle-notch text-amber-500'}"></i>
+                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${escapeHtml(t.text)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    let memoHtml = '';
+                    if (memo.trim()) {
+                        memoHtml = `
+                            <div class="mt-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-200">
+                                <i class="fa-regular fa-note-sticky text-amber-500 mr-1"></i>${escapeHtml(memo)}
+                            </div>
+                        `;
+                    }
+
+                    section.innerHTML = `
+                        <div class="flex items-center justify-between border-b pb-1.5 border-slate-200">
+                            <span class="font-bold text-slate-800 text-xs sm:text-sm">${item.subject}</span>
+                            <span class="text-[11px] font-medium text-slate-500">${dayObj.name} ${item.period}限</span>
+                        </div>
+                        ${todosHtml}
+                        ${memoHtml}
+                    `;
+                    body.appendChild(section);
+                }
+            });
+
+            if (!hasItems) {
+                body.innerHTML = `
+                    <div class="text-center py-8 text-slate-400 text-xs sm:text-sm">
+                        <i class="fa-solid fa-clipboard-check text-3xl mb-2 text-slate-300 block"></i>
+                        現在保存されている課題やメモはありません。<br>時間割の科目をクリックして追加できます。
+                    </div>
+                `;
+            }
+
+            document.getElementById('todo-summary-modal').classList.remove('hidden');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
+        }
+
+        // イベントハンドラー設定
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTimetable();
+
+            // 画面リサイズ時に再描画（レスポンシブ切り替え用）
+            window.addEventListener('resize', renderTimetable);
+
+            // リアルタイム時計更新タイマー
+            setInterval(updateCurrentTimeHighlight, 1000);
+
+            // 検索・フィルタ制御
+            document.getElementById('search-input').addEventListener('input', renderTimetable);
+            document.getElementById('category-filter').addEventListener('change', renderTimetable);
+            document.getElementById('toggle-highlight').addEventListener('change', updateCurrentTimeHighlight);
+
+            // モーダル関連イベント
+            document.getElementById('modal-close-btn').addEventListener('click', closeSubjectModal);
+            document.getElementById('modal-save-btn').addEventListener('click', () => {
+                if (activeSelectedSubject) {
+                    const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
+                    const memoVal = document.getElementById('modal-memo').value;
+                    subjectMemos[subjectKey] = memoVal;
+                    saveStoredData(STORAGE_KEY_MEMO, subjectMemos);
+                }
+                closeSubjectModal();
+                renderTimetable();
+            });
+
+            document.getElementById('modal-todo-add-btn').addEventListener('click', addTodoItem);
+            document.getElementById('modal-todo-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodoItem();
+            });
+
+            // ToDoサマリーモーダル
+            document.getElementById('todo-list-btn').addEventListener('click', openTodoSummaryModal);
+            document.getElementById('todo-modal-close').addEventListener('click', () => {
+                document.getElementById('todo-summary-modal').classList.add('hidden');
+            });
+            document.getElementById('todo-modal-close-btn').addEventListener('click', () => {
+                document.getElementById('todo-summary-modal').classList.add('hidden');
+            });
+
+            // モーダル背景クリック時閉じ
+            document.getElementById('subject-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'subject-modal') closeSubjectModal();
+            });
+
+            // 曜日切り替えタブ (スマホ)
+            document.querySelectorAll('.day-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    document.querySelectorAll('.day-tab-btn').forEach(b => {
+                        b.classList.remove('active', 'bg-white', 'text-slate-700', 'shadow-xs', 'font-bold');
+                        b.classList.add('text-slate-600');
+                    });
+                    target.classList.add('active', 'bg-white', 'text-slate-700', 'shadow-xs', 'font-bold');
+                    target.classList.remove('text-slate-600');
+
+                    selectedDayFilter = target.dataset.day;
+                    renderTimetable();
+                });
+            });
+
+            // シミュレーターボタン
+            const simBtn = document.getElementById('sim-btn');
+            const simPanel = document.getElementById('sim-panel');
+            simBtn.addEventListener('click', () => {
+                simPanel.classList.toggle('hidden');
+            });
+
+            document.getElementById('sim-apply-btn').addEventListener('click', () => {
+                const dayVal = parseInt(document.getElementById('sim-day').value);
+                const timeVal = document.getElementById('sim-time').value;
+
+                const [h, m] = timeVal.split(':').map(Number);
+                
+                const simDate = new Date();
+                const currentDay = simDate.getDay();
+                const distance = (dayVal - currentDay + 7) % 7;
+                simDate.setDate(simDate.getDate() + distance);
+                simDate.setHours(h, m, 0);
+
+                currentSimulatedTime = simDate;
+                updateCurrentTimeHighlight();
+            });
+
+            document.getElementById('sim-reset-btn').addEventListener('click', () => {
+                currentSimulatedTime = null;
+                updateCurrentTimeHighlight();
+            });
+        });
+    </script>
+</body>
+</html>
