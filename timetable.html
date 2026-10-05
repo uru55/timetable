@@ -58,8 +58,8 @@ permalink: /
 
         /* カスタムスクロールバー */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         ::-webkit-scrollbar-track {
             background: #f1f5f9;
@@ -67,9 +67,6 @@ permalink: /
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
         }
 
         /* 印刷設定 */
@@ -80,7 +77,7 @@ permalink: /
             body {
                 background: white !important;
                 color: black !important;
-                font-size: 11pt;
+                font-size: 10pt;
             }
             .print-container {
                 width: 100% !important;
@@ -90,7 +87,7 @@ permalink: /
             }
             .timetable-grid {
                 display: grid !important;
-                grid-template-columns: 80px repeat(5, 1fr) !important;
+                grid-template-columns: 50px repeat(5, 1fr) !important;
                 gap: 1px !important;
                 background-color: #cbd5e1 !important;
                 border: 1px solid #94a3b8 !important;
@@ -101,16 +98,11 @@ permalink: /
                 border: 1px solid #cbd5e1 !important;
                 background: white !important;
                 color: black !important;
-                padding: 6px !important;
+                padding: 4px !important;
             }
             .print-header {
                 display: block !important;
-                margin-bottom: 15px;
-            }
-            .badge-print {
-                border: 1px solid #64748b !important;
-                color: #0f172a !important;
-                background: #f1f5f9 !important;
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -118,38 +110,34 @@ permalink: /
 <body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
 
     <!-- ヘッダー -->
-    <header class="bg-gradient-to-r from-slate-900 via-nit-900 to-indigo-950 text-white shadow-lg sticky top-0 z-30 no-print">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-4">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5">
+    <header class="bg-gradient-to-r from-slate-900 via-nit-900 to-indigo-950 text-white shadow-md sticky top-0 z-30 no-print">
+        <div class="w-full px-3 sm:px-6 py-2">
+            <div class="flex items-center justify-between gap-2">
                 
                 <!-- タイトルエリア -->
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400 text-lg sm:text-xl font-bold shadow-inner backdrop-blur-sm shrink-0">
+                <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400 text-xs sm:text-sm font-bold shadow-inner shrink-0">
                         <i class="fa-solid font-mono">IT</i>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">令和8年度 後期</span>
-                            <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">仙台高等専門学校</span>
-                        </div>
-                        <h1 class="text-lg sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2 mt-0.5">
-                            4年 ITコース <span class="text-xs sm:text-sm font-normal text-slate-300">(4年IT)</span>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xs sm:text-base font-bold tracking-tight text-white leading-tight">
+                            4年 ITコース <span class="text-[10px] sm:text-xs font-normal text-slate-300">(4IT)</span>
                         </h1>
+                        <span class="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:inline">後期</span>
                     </div>
                 </div>
 
-                <!-- 担任＆リアルタイム時計・ステータス -->
-                <div class="flex items-center justify-between md:justify-end gap-2 pt-1.5 md:pt-0 border-t md:border-t-0 border-slate-800/80 text-xs">
-                    <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 text-[11px] sm:text-xs">
-                        <i class="fa-solid fa-user-tie text-blue-400"></i>
-                        <span class="text-slate-400">担任:</span>
-                        <span class="font-semibold text-slate-200">小林（秀）</span>
+                <!-- 担任＆リアルタイム時計 -->
+                <div class="flex items-center gap-2 text-[10px] sm:text-xs">
+                    <div class="flex items-center gap-1 bg-slate-800/80 border border-slate-700/60 rounded px-2 py-1">
+                        <i class="fa-solid fa-user-tie text-blue-400 text-[10px]"></i>
+                        <span class="text-slate-400 hidden sm:inline">担任:</span>
+                        <span class="font-semibold text-slate-200">小林(秀)</span>
                     </div>
 
-                    <!-- リアルタイム時計 -->
-                    <div class="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg px-2.5 py-1 text-[11px] sm:text-xs text-slate-300">
-                        <i class="fa-regular fa-clock text-amber-400 animate-pulse"></i>
-                        <span id="current-time-display" class="font-mono font-medium">--:--:--</span>
+                    <div class="flex items-center gap-1 bg-slate-800/80 border border-slate-700/60 rounded px-2 py-1 text-slate-300">
+                        <i class="fa-regular fa-clock text-amber-400 animate-pulse text-[10px]"></i>
+                        <span id="current-time-display" class="font-mono font-medium">--:--</span>
                     </div>
                 </div>
 
@@ -158,74 +146,55 @@ permalink: /
     </header>
 
     <!-- コントロールバー & フィルター -->
-    <div class="bg-white border-b border-slate-200 shadow-sm sticky top-[57px] sm:top-[73px] z-20 no-print">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+    <div class="bg-white border-b border-slate-200 shadow-xs sticky top-[41px] sm:top-[49px] z-20 no-print">
+        <div class="w-full px-3 sm:px-6 py-1.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                 
                 <!-- 検索 & フィルター -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full lg:w-auto">
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <!-- 検索ボックス -->
-                        <div class="relative flex-1 sm:w-60">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" id="search-input" placeholder="科目・教員・教室名で検索..." 
-                                   class="w-full pl-8 pr-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
-                        </div>
-
-                        <!-- カテゴリフィルター -->
-                        <select id="category-filter" class="py-1.5 px-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 shrink-0">
-                            <option value="all">全区分</option>
-                            <option value="REQUIRED">必修</option>
-                            <option value="ELECTIVE">選択</option>
-                        </select>
+                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="search-input" placeholder="科目・教員・教室で検索..." 
+                               class="w-full pl-7 pr-2 py-1 text-xs bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
                     </div>
 
-                    <!-- 曜日選択（スマホ表示用タブ） -->
-                    <div class="flex sm:hidden rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-medium w-full justify-between">
-                        <button class="day-tab-btn active flex-1 py-1 text-center rounded-md text-slate-700 bg-white shadow-xs font-bold" data-day="all">全日</button>
-                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Mon">月</button>
-                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Tue">火</button>
-                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Wed">水</button>
-                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Thu">木</button>
-                        <button class="day-tab-btn flex-1 py-1 text-center rounded-md text-slate-600" data-day="Fri">金</button>
-                    </div>
+                    <select id="category-filter" class="py-1 px-2 text-xs bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium text-slate-700 shrink-0">
+                        <option value="all">全区分</option>
+                        <option value="REQUIRED">必修</option>
+                        <option value="ELECTIVE">選択</option>
+                    </select>
                 </div>
 
                 <!-- トグル & アクションボタン -->
-                <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-                    <!-- 現在授業ハイライト トグル -->
-                    <label class="inline-flex items-center cursor-pointer bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 transition-all select-none">
+                <div class="flex items-center gap-2 shrink-0">
+                    <label class="inline-flex items-center cursor-pointer bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-md px-2 py-1 text-xs text-slate-700 select-none">
                         <input type="checkbox" id="toggle-highlight" class="sr-only peer" checked>
                         <div class="relative w-7 h-3.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-1.5 text-[11px] sm:text-xs font-medium">現在コマ強調</span>
+                        <span class="ml-1.5 text-xs font-medium hidden sm:inline">現在コマ強調</span>
                     </label>
 
-                    <div class="flex items-center gap-1.5">
-                        <!-- デモ用：時限シミュレーターボタン -->
-                        <button id="sim-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all">
-                            <i class="fa-solid fa-sliders text-blue-600"></i>
-                            <span class="hidden sm:inline">時間テスト</span>
-                        </button>
+                    <button id="sim-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-sliders text-blue-600 text-[10px]"></i>
+                        <span class="hidden sm:inline">テスト</span>
+                    </button>
 
-                        <!-- 課題・メモ一覧ダイアログボタン -->
-                        <button id="todo-list-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-all relative">
-                            <i class="fa-solid fa-check-double text-indigo-600"></i>
-                            <span>課題・メモ</span>
-                            <span id="todo-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
-                        </button>
-                    </div>
+                    <button id="todo-list-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 relative">
+                        <i class="fa-solid fa-check-double text-indigo-600 text-[10px]"></i>
+                        <span>課題・メモ</span>
+                        <span id="todo-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                    </button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- 現在の授業案内バー (アクティブ時表示) -->
-    <div id="current-subject-banner" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-2 text-xs sm:text-sm shadow-md hidden no-print transition-all">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+    <!-- 現在の授業案内バー -->
+    <div id="current-subject-banner" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1.5 text-xs shadow-md hidden no-print">
+        <div class="w-full px-1 sm:px-3 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 truncate">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
-                <span class="font-bold text-[10px] sm:text-xs uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded shrink-0">開講中</span>
+                <span class="font-bold text-[10px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded shrink-0">開講中</span>
                 <span id="current-banner-text" class="font-medium truncate">現在 [1限] 国語Ⅳ (2-102) が行われています</span>
             </div>
             <button id="banner-focus-btn" class="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded shrink-0 transition-all">
@@ -234,93 +203,58 @@ permalink: /
         </div>
     </div>
 
-    <!-- シミュレーターコントロールパネル (非表示/トグル) -->
-    <div id="sim-panel" class="bg-amber-50 border-b border-amber-200 p-3 hidden no-print">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div class="flex items-center gap-2 font-semibold text-amber-800">
-                <i class="fa-solid fa-flask"></i> 時間割シミュレーター（動作テスト用）
+    <!-- シミュレーターコントロールパネル -->
+    <div id="sim-panel" class="bg-amber-50 border-b border-amber-200 p-2 hidden no-print">
+        <div class="w-full px-3 sm:px-6 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-1.5 font-semibold text-amber-800">
+                <i class="fa-solid fa-flask"></i> シミュレーター
             </div>
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <label class="flex items-center gap-1">
-                    曜日:
-                    <select id="sim-day" class="bg-white border border-amber-300 rounded px-2 py-1">
-                        <option value="1">月曜日</option>
-                        <option value="2">火曜日</option>
-                        <option value="3">水曜日</option>
-                        <option value="4">木曜日</option>
-                        <option value="5">金曜日</option>
-                    </select>
-                </label>
-                <label class="flex items-center gap-1">
-                    時間:
-                    <input type="time" id="sim-time" value="09:00" class="bg-white border border-amber-300 rounded px-2 py-1">
-                </label>
-                <button id="sim-apply-btn" class="bg-amber-600 text-white px-2.5 py-1 rounded font-medium hover:bg-amber-700">適用</button>
-                <button id="sim-reset-btn" class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded font-medium hover:bg-slate-300">リセット</button>
+            <div class="flex items-center gap-2">
+                <select id="sim-day" class="bg-white border border-amber-300 rounded px-2 py-1 text-xs">
+                    <option value="1">月</option>
+                    <option value="2">火</option>
+                    <option value="3">水</option>
+                    <option value="4">木</option>
+                    <option value="5">金</option>
+                </select>
+                <input type="time" id="sim-time" value="09:00" class="bg-white border border-amber-300 rounded px-2 py-1 text-xs">
+                <button id="sim-apply-btn" class="bg-amber-600 text-white px-2.5 py-1 rounded text-xs font-medium hover:bg-amber-700">適用</button>
+                <button id="sim-reset-btn" class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-medium hover:bg-slate-300">解除</button>
             </div>
         </div>
     </div>
 
     <!-- メインコンテンツエリア -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-3 sm:py-6 print-container">
-
-        <!-- 印刷用ヘッダー (通常非表示) -->
-        <div class="hidden print-header text-center border-b pb-3 mb-4">
-            <h1 class="text-2xl font-bold">仙台高等専門学校 令和8年度後期授業時間割</h1>
-            <p class="text-base text-slate-700 mt-1">クラス：4年 ITコース（4IT） | 担任：小林（秀）</p>
-        </div>
-
-        <!-- 凡例 (カテゴリの説明) -->
-        <div class="flex items-center justify-between gap-2 mb-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs no-print text-xs">
-            <div class="font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <i class="fa-solid fa-tags text-slate-400"></i> 科目区分:
-            </div>
-            <div class="flex items-center gap-3 font-medium">
-                <div class="flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                    <span class="text-slate-700">必修</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                    <span class="text-slate-700">選択</span>
-                </div>
-            </div>
-        </div>
+    <main class="flex-1 w-full mx-auto p-2 sm:p-4 print-container flex flex-col">
 
         <!-- 時間割グリッド表示 -->
-        <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
-            <div id="timetable-scroll-container" class="overflow-x-auto">
-                <div id="timetable-wrapper" class="w-full transition-all">
+        <div class="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-1 flex flex-col">
+            <div id="timetable-scroll-container" class="w-full h-full flex flex-col">
+                <div id="timetable-wrapper" class="w-full h-full flex flex-col">
                     
                     <!-- 時間割グリッド構造 -->
-                    <div id="timetable-grid" class="timetable-grid grid divide-x divide-y divide-slate-200 border-b border-slate-200">
+                    <div id="timetable-grid" class="timetable-grid grid grid-cols-6 divide-x divide-y divide-slate-200 border-b border-slate-200 flex-1">
                         
                         <!-- 左上角セル -->
-                        <div class="bg-slate-100 p-2 sm:p-3 flex flex-col justify-center items-center font-bold text-[11px] sm:text-xs text-slate-500 uppercase tracking-wider">
+                        <div class="bg-slate-100 p-1 flex flex-col justify-center items-center font-bold text-xs text-slate-500">
                             <span>時限</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-400 font-normal">時間帯</span>
                         </div>
 
                         <!-- 曜日ヘッダー -->
-                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Mon">
-                            <span class="text-blue-600 block sm:inline">月</span>
-                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Mon</span>
+                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Mon">
+                            <span class="text-blue-600">月</span>
                         </div>
-                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Tue">
-                            <span class="text-blue-600 block sm:inline">火</span>
-                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Tue</span>
+                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Tue">
+                            <span class="text-blue-600">火</span>
                         </div>
-                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Wed">
-                            <span class="text-blue-600 block sm:inline">水</span>
-                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Wed</span>
+                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Wed">
+                            <span class="text-blue-600">水</span>
                         </div>
-                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Thu">
-                            <span class="text-blue-600 block sm:inline">木</span>
-                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Thu</span>
+                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Thu">
+                            <span class="text-blue-600">木</span>
                         </div>
-                        <div class="day-header bg-slate-50 p-2 sm:p-3 text-center font-bold text-slate-700 text-xs sm:text-base border-t-0" data-day-code="Fri">
-                            <span class="text-blue-600 block sm:inline">金</span>
-                            <span class="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline">Fri</span>
+                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Fri">
+                            <span class="text-blue-600">金</span>
                         </div>
 
                         <!-- 1限〜5限 のセルがJSで動的に挿入 -->
@@ -339,46 +273,46 @@ permalink: /
     <!-- ==================== モーダルダイアログ群 ==================== -->
 
     <!-- 科目詳細 & メモ・課題モーダル -->
-    <div id="subject-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all scale-95 opacity-0 modal-container">
+    <div id="subject-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden transition-opacity duration-200 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all scale-95 opacity-0 modal-container">
             
             <!-- モーダルヘッダー -->
-            <div id="modal-header-bg" class="p-4 sm:p-5 text-white bg-gradient-to-r from-blue-600 to-indigo-600 relative">
-                <button id="modal-close-btn" class="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 w-8 h-8 rounded-full flex items-center justify-center transition-all">
-                    <i class="fa-solid fa-xmark"></i>
+            <div id="modal-header-bg" class="p-4 text-white bg-gradient-to-r from-blue-600 to-indigo-600 relative">
+                <button id="modal-close-btn" class="absolute top-3.5 right-3.5 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 w-7 h-7 rounded-full flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
-                <div class="flex items-center gap-2 mb-1 flex-wrap pr-8">
-                    <span id="modal-category-badge" class="bg-white/20 text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-semibold border border-white/30">
+                <div class="flex items-center gap-1.5 mb-1.5 flex-wrap pr-6">
+                    <span id="modal-category-badge" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold border border-white/30">
                         必修
                     </span>
-                    <span id="modal-period-badge" class="bg-black/20 text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-medium">
+                    <span id="modal-period-badge" class="bg-black/20 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
                         月曜 1限 (8:50 - 10:20)
                     </span>
                 </div>
-                <h2 id="modal-title" class="text-xl sm:text-2xl font-bold mt-1">国語Ⅳ</h2>
+                <h2 id="modal-title" class="text-lg sm:text-xl font-bold">国語Ⅳ</h2>
             </div>
 
             <!-- モーダルボディ -->
-            <div class="p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[75vh] overflow-y-auto">
+            <div class="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
                 
                 <!-- 基本情報カード -->
-                <div class="grid grid-cols-2 gap-2.5 sm:gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs sm:text-sm">
+                <div class="grid grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
                     <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                            <i class="fa-solid fa-user-chalkboard"></i>
+                            <i class="fa-solid fa-user-chalkboard text-xs"></i>
                         </div>
                         <div class="truncate">
-                            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">担当教員</div>
+                            <div class="text-[10px] text-slate-500 font-medium">担当教員</div>
                             <div id="modal-teacher" class="font-bold text-slate-800 truncate">犬飼</div>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0">
-                            <i class="fa-solid fa-door-open"></i>
+                            <i class="fa-solid fa-door-open text-xs"></i>
                         </div>
                         <div class="truncate">
-                            <div class="text-[10px] sm:text-[11px] text-slate-500 font-medium">使用教室</div>
+                            <div class="text-[10px] text-slate-500 font-medium">使用教室</div>
                             <div id="modal-room" class="font-bold text-slate-800 truncate">2-102</div>
                         </div>
                     </div>
@@ -386,20 +320,18 @@ permalink: /
 
                 <!-- 課題セクション -->
                 <div>
-                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-2">
+                    <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-2">
                         <i class="fa-solid fa-list-check text-indigo-600"></i>
                         課題
                     </h3>
-                    <div class="flex flex-col sm:flex-row gap-2 mb-2">
+                    <div class="flex gap-2 mb-2">
                         <input type="text" id="modal-todo-input" placeholder="新しい課題を追加..." 
-                               class="flex-1 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <div class="flex gap-2">
-                            <input type="date" id="modal-todo-date" 
-                                   class="text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0">
-                            <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all shrink-0">
-                                追加
-                            </button>
-                        </div>
+                               class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="date" id="modal-todo-date" 
+                               class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shrink-0 w-28">
+                        <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all shrink-0">
+                            追加
+                        </button>
                     </div>
                     <ul id="modal-todo-list" class="space-y-1.5 max-h-36 overflow-y-auto">
                         <!-- 動的生成リスト -->
@@ -408,20 +340,20 @@ permalink: /
 
                 <!-- メモセクション -->
                 <div>
-                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                    <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
                         <i class="fa-regular fa-note-sticky text-amber-500"></i>
                         メモ
                     </h3>
-                    <textarea id="modal-memo" rows="3" placeholder="教科書、持参物、評価方法などのメモを入力..."
-                              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <textarea id="modal-memo" rows="2" placeholder="教科書、持参物、評価方法などのメモ..."
+                              class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
                 </div>
 
             </div>
 
             <!-- モーダルフッター -->
-            <div class="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                <span class="text-[10px] sm:text-[11px] text-slate-400">※自動保存されます</span>
-                <button id="modal-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-xs">
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span class="text-[10px] text-slate-400">※自動保存されます</span>
+                <button id="modal-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-xs">
                     保存して閉じる
                 </button>
             </div>
@@ -431,22 +363,22 @@ permalink: /
 
 
     <!-- 課題・メモ一覧モーダル -->
-    <div id="todo-summary-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 hidden no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden">
-            <div class="p-4 sm:p-5 bg-indigo-900 text-white flex justify-between items-center">
+    <div id="todo-summary-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div class="p-4 bg-indigo-900 text-white flex justify-between items-center">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-indigo-300 text-lg sm:text-xl"></i>
-                    <h2 class="text-base sm:text-lg font-bold">課題・メモ一覧</h2>
+                    <i class="fa-solid fa-list-check text-indigo-300"></i>
+                    <h2 class="text-sm sm:text-base font-bold">課題・メモ一覧</h2>
                 </div>
                 <button id="todo-modal-close" class="text-white/80 hover:text-white">
-                    <i class="fa-solid fa-xmark text-lg sm:text-xl"></i>
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
-            <div class="p-4 sm:p-6 max-h-[65vh] overflow-y-auto space-y-3" id="todo-summary-body">
+            <div class="p-4 max-h-[65vh] overflow-y-auto space-y-3" id="todo-summary-body">
                 <!-- 動的に集計された課題・メモを表示 -->
             </div>
-            <div class="p-3.5 bg-slate-50 border-t border-slate-200 text-right">
-                <button id="todo-modal-close-btn" class="bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-lg">
+            <div class="p-3 bg-slate-50 border-t border-slate-200 text-right">
+                <button id="todo-modal-close-btn" class="bg-slate-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg">
                     閉じる
                 </button>
             </div>
@@ -519,15 +451,13 @@ permalink: /
         ];
 
         // アプリケーション状態管理
-        let currentSimulatedTime = null; // nullなら実時間
+        let currentSimulatedTime = null;
         let activeSelectedSubject = null;
-        let selectedDayFilter = 'all';
 
         // LocalStorage キー
         const STORAGE_KEY_MEMO = 'nit_4it_timetable_memos_v1';
         const STORAGE_KEY_TODO = 'nit_4it_timetable_todos_v1';
 
-        // データの読み込み
         function loadStoredData(key) {
             try {
                 const data = localStorage.getItem(key);
@@ -538,7 +468,6 @@ permalink: /
             }
         }
 
-        // データの保存
         function saveStoredData(key, data) {
             try {
                 localStorage.setItem(key, JSON.stringify(data));
@@ -550,15 +479,9 @@ permalink: /
         let subjectMemos = loadStoredData(STORAGE_KEY_MEMO);
         let subjectTodos = loadStoredData(STORAGE_KEY_TODO);
 
-        // 期限バッジHTML生成（視認性向上）
         function getDueDateBadge(dueDateStr, completed) {
             if (!dueDateStr) return '';
-
-            if (completed) {
-                return `<span class="text-[10px] text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full font-normal shrink-0">
-                    <i class="fa-regular fa-calendar-check mr-1"></i>${escapeHtml(dueDateStr)}
-                </span>`;
-            }
+            if (completed) return `<span class="text-[9px] text-slate-400 bg-slate-100 px-1 rounded">完了</span>`;
 
             const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -566,108 +489,51 @@ permalink: /
             const [y, m, d] = dueDateStr.split('-').map(Number);
             const targetDate = new Date(y, m - 1, d);
 
-            const diffTime = targetDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-            const dayOfWeek = dayNames[targetDate.getDay()];
-            const formattedDate = `${m}/${d}(${dayOfWeek})`;
+            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
 
             if (diffDays < 0) {
-                // 期限切れ
-                const overdueDays = Math.abs(diffDays);
-                return `<span class="text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1 shrink-0 animate-pulse">
-                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> ${overdueDays}日超過 (${formattedDate})
-                </span>`;
+                return `<span class="text-[9px] font-bold text-rose-700 bg-rose-100 px-1 rounded">${Math.abs(diffDays)}日超過</span>`;
             } else if (diffDays === 0) {
-                // 今日まで
-                return `<span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-clock text-amber-600"></i> 今日まで (${formattedDate})
-                </span>`;
-            } else if (diffDays === 1) {
-                // 明日まで
-                return `<span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                    <i class="fa-regular fa-clock text-amber-500"></i> 明日まで (${formattedDate})
-                </span>`;
-            } else if (diffDays <= 3) {
-                // 3日以内
-                return `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                    <i class="fa-regular fa-calendar-days text-blue-500"></i> あと${diffDays}日 (${formattedDate})
-                </span>`;
+                return `<span class="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 rounded">今日まで</span>`;
             } else {
-                // 余裕あり
-                return `<span class="text-[10px] text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                    <i class="fa-regular fa-calendar text-slate-400"></i> あと${diffDays}日 (${formattedDate})
-                </span>`;
+                return `<span class="text-[9px] text-blue-700 bg-blue-50 px-1 rounded">あと${diffDays}日</span>`;
             }
         }
 
         // 時間割の初期化とレンダリング
         function renderTimetable() {
             const bodyContainer = document.getElementById('timetable-body');
-            const gridContainer = document.getElementById('timetable-grid');
-            const wrapper = document.getElementById('timetable-wrapper');
             bodyContainer.innerHTML = '';
 
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
             const categoryFilter = document.getElementById('category-filter').value;
 
-            // スマホでの表示モード判定
-            const isMobile = window.innerWidth < 640;
-            const isSingleDayView = isMobile && selectedDayFilter !== 'all';
-
-            // グリッドレイアウトの最適化
-            if (isSingleDayView) {
-                gridContainer.className = 'timetable-grid grid grid-cols-2 divide-x divide-y divide-slate-200 border-b border-slate-200';
-                wrapper.className = 'w-full';
-            } else {
-                gridContainer.className = 'timetable-grid grid grid-cols-6 divide-x divide-y divide-slate-200 border-b border-slate-200';
-                wrapper.className = 'min-w-[650px] sm:min-w-full';
-            }
-
-            // 曜日ヘッダーの表示トグル
-            document.querySelectorAll('.day-header').forEach(header => {
-                const dayCode = header.dataset.dayCode;
-                if (selectedDayFilter === 'all' || selectedDayFilter === dayCode) {
-                    header.classList.remove('hidden');
-                } else {
-                    header.classList.add('hidden');
-                }
-            });
-
             PERIODS.forEach(period => {
                 // 左端の時限ラベルセル
                 const periodLabelCell = document.createElement('div');
-                periodLabelCell.className = 'bg-slate-50 p-2 sm:p-3 flex flex-col justify-center items-center border-t border-slate-200 text-center select-none';
+                periodLabelCell.className = 'bg-slate-50 p-1 flex flex-col justify-center items-center border-t border-slate-200 text-center select-none';
                 periodLabelCell.innerHTML = `
-                    <span class="font-extrabold text-slate-800 text-xs sm:text-base">${period.name}</span>
-                    <span class="text-[9px] sm:text-xs text-slate-500 font-mono mt-0.5 leading-tight">${period.start}<br class="sm:hidden">~ ${period.end}</span>
+                    <span class="font-extrabold text-slate-800 text-xs sm:text-sm">${period.id}限</span>
                 `;
                 bodyContainer.appendChild(periodLabelCell);
 
                 // 各曜日のセル
                 DAYS.forEach(day => {
-                    // 単一曜日選択時は不要な曜日をスキップ
-                    if (selectedDayFilter !== 'all' && selectedDayFilter !== day.code) {
-                        return;
-                    }
-
                     const item = timetableData.find(d => d.day === day.code && d.period === period.id);
                     const cell = document.createElement('div');
                     
-                    cell.className = `p-1.5 sm:p-2.5 relative transition-all duration-200 flex flex-col`;
+                    cell.className = `p-1 relative transition-all duration-200 flex flex-col`;
                     cell.dataset.day = day.code;
                     cell.dataset.period = period.id;
 
                     if (!item || item.subject === 'なし') {
                         // 空きコマ表示
                         cell.innerHTML = `
-                            <div class="h-full min-h-[75px] sm:min-h-[110px] rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-1.5 flex flex-col items-center justify-center text-slate-300">
-                                <span class="text-[11px] sm:text-xs font-medium">空きコマ</span>
+                            <div class="h-full min-h-[50px] sm:min-h-[58px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-1 flex flex-col items-center justify-center text-slate-300">
+                                <span class="text-[10px]">空き</span>
                             </div>
                         `;
                     } else {
-                        // 検索・絞り込み一致フラグ
                         const matchesSearch = !searchTerm || 
                             item.subject.toLowerCase().includes(searchTerm) || 
                             item.teacher.toLowerCase().includes(searchTerm) || 
@@ -678,38 +544,24 @@ permalink: /
                         const isMatch = matchesSearch && matchesCategory;
                         const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
 
-                        // 課題件数計算
                         const subjectKey = `${item.day}_${item.period}`;
                         const todos = subjectTodos[subjectKey] || [];
-                        const pendingTodos = todos.filter(t => !t.completed).length;
 
                         cell.innerHTML = `
-                            <div class="subject-card h-full min-h-[85px] sm:min-h-[115px] rounded-xl border ${catInfo.border} ${catInfo.lightBg} p-2 sm:p-2.5 flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 ${!isMatch ? 'opacity-30 grayscale-[50%]' : ''}"
+                            <div class="subject-card h-full min-h-[50px] sm:min-h-[58px] rounded-lg border ${catInfo.border} ${catInfo.lightBg} p-1.5 flex flex-col justify-between cursor-pointer hover:shadow-xs transition-all duration-150 ${!isMatch ? 'opacity-25 grayscale-[50%]' : ''}"
                                  onclick="openSubjectModal('${item.day}', ${item.period})">
                                 
                                 <div>
-                                    <!-- カテゴリバッジ & 部屋 -->
-                                    <div class="flex items-center justify-between gap-1 mb-1">
-                                        <span class="badge-print inline-block px-1.5 py-0.2 text-[9px] sm:text-[10px] font-bold rounded ${catInfo.bg} text-white shadow-xs">
-                                            ${catInfo.name}
-                                        </span>
-                                        <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 bg-white/80 px-1 py-0.2 rounded border border-slate-200 truncate max-w-[80px] sm:max-w-[90px]">
-                                            <i class="fa-solid fa-location-dot text-[9px] text-slate-400 mr-0.5"></i>${item.room}
-                                        </span>
-                                    </div>
-
                                     <!-- 科目名 -->
-                                    <h4 class="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-2 leading-tight sm:leading-snug mt-0.5">
+                                    <h4 class="font-extrabold text-slate-900 text-[11px] sm:text-xs leading-tight line-clamp-2">
                                         ${item.subject}
                                     </h4>
                                 </div>
 
-                                <!-- 担当教員 & 課題バッジ -->
-                                <div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-600 font-medium pt-1 mt-1 border-t border-slate-200/60">
-                                    <span class="truncate max-w-[85px] sm:max-w-[100px]">
-                                        <i class="fa-solid fa-user-tie text-[9px] text-slate-400 mr-0.5"></i>${item.teacher}
-                                    </span>
-                                    ${pendingTodos > 0 ? `<span class="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full" title="未完了課題">${pendingTodos}</span>` : ''}
+                                <!-- 担当教員・教室名 -->
+                                <div class="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 font-medium pt-1 mt-1 border-t border-slate-200/50 leading-none">
+                                    <span class="truncate max-w-[50px] sm:max-w-[70px]">${item.teacher}</span>
+                                    <span class="truncate text-slate-600 font-semibold bg-white/80 px-1 py-0.5 rounded">${item.room}</span>
                                 </div>
                             </div>
                         `;
@@ -719,27 +571,23 @@ permalink: /
                 });
             });
 
-            // 現在進行中授業のハイライト処理を実行
             updateCurrentTimeHighlight();
             updateTodoBadgeCount();
         }
 
-        // 現在の曜日・時間帯から開講中の授業を判定
         function updateCurrentTimeHighlight() {
             const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
 
-            // 時計表示を更新
-            const timeStr = now.toTimeString().split(' ')[0];
+            const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
             const daysStr = ['日', '月', '火', '水', '木', '金', '土'];
-            document.getElementById('current-time-display').innerText = `${daysStr[now.getDay()]}曜 ${timeStr}`;
+            document.getElementById('current-time-display').innerText = `${daysStr[now.getDay()]} ${timeStr}`;
 
             const isHighlightEnabled = document.getElementById('toggle-highlight').checked;
             
-            // 既存のハイライト解除
             document.querySelectorAll('.timetable-grid [data-day]').forEach(el => {
                 const card = el.querySelector('.subject-card');
                 if (card) {
-                    card.classList.remove('ring-4', 'ring-blue-500/80', 'ring-offset-2', 'z-10', 'animate-glow');
+                    card.classList.remove('ring-2', 'ring-blue-500', 'z-10');
                 }
             });
 
@@ -750,27 +598,22 @@ permalink: /
                 return;
             }
 
-            const dayOfWeek = now.getDay(); // 0:日, 1:月... 5:金
+            const dayOfWeek = now.getDay();
             const dayCodes = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const currentDayCode = dayCodes[dayOfWeek];
 
             if (dayOfWeek === 0 || dayOfWeek === 6) {
-                // 週末
                 banner.classList.add('hidden');
                 return;
             }
 
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-            // 時限を判定
             let activePeriod = null;
             PERIODS.forEach(p => {
                 const [sH, sM] = p.start.split(':').map(Number);
                 const [eH, eM] = p.end.split(':').map(Number);
-                const startMin = sH * 60 + sM;
-                const endMin = eH * 60 + eM;
-
-                if (currentMinutes >= startMin && currentMinutes <= endMin) {
+                if (currentMinutes >= (sH * 60 + sM) && currentMinutes <= (eH * 60 + eM)) {
                     activePeriod = p.id;
                 }
             });
@@ -783,23 +626,16 @@ permalink: /
                     if (activeCell) {
                         const card = activeCell.querySelector('.subject-card');
                         if (card) {
-                            card.classList.add('ring-4', 'ring-blue-500/80', 'ring-offset-2', 'z-10', 'animate-glow');
+                            card.classList.add('ring-2', 'ring-blue-500', 'z-10');
                         }
                     }
 
-                    // バナー表示
                     banner.classList.remove('hidden');
                     document.getElementById('current-banner-text').innerText = 
-                        `現在開講中 [${activePeriod}限] ${activeData.subject} (${activeData.room} / 担当: ${activeData.teacher})`;
+                        `現在 [${activePeriod}限] ${activeData.subject} (${activeData.room})`;
                     
                     document.getElementById('banner-focus-btn').onclick = () => {
-                        if (activeCell) {
-                            activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        } else {
-                            // 表示中の曜日が違う場合は該当曜日に切り替え
-                            const dayBtn = document.querySelector(`.day-tab-btn[data-day="${currentDayCode}"]`);
-                            if (dayBtn) dayBtn.click();
-                        }
+                        if (activeCell) activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     };
                 } else {
                     banner.classList.add('hidden');
@@ -809,7 +645,6 @@ permalink: /
             }
         }
 
-        // 詳細モーダルを開く
         function openSubjectModal(dayCode, periodId) {
             const item = timetableData.find(d => d.day === dayCode && d.period === periodId);
             if (!item || item.subject === 'なし') return;
@@ -818,24 +653,19 @@ permalink: /
             const subjectKey = `${dayCode}_${periodId}`;
             const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
 
-            // モーダルの表示設定
             document.getElementById('modal-title').innerText = item.subject;
             document.getElementById('modal-teacher').innerText = item.teacher;
             document.getElementById('modal-room').innerText = item.room;
 
             const dayObj = DAYS.find(d => d.code === dayCode);
             const periodObj = PERIODS.find(p => p.id === periodId);
-            document.getElementById('modal-period-badge').innerText = `${dayObj.name} ${periodObj.name} (${periodObj.start} - ${periodObj.end})`;
+            document.getElementById('modal-period-badge').innerText = `${dayObj.name} ${periodObj.name} (${periodObj.start}-${periodObj.end})`;
             
-            const catBadge = document.getElementById('modal-category-badge');
-            catBadge.innerText = catInfo.name;
-
-            // メモと課題の復元
+            document.getElementById('modal-category-badge').innerText = catInfo.name;
             document.getElementById('modal-memo').value = subjectMemos[subjectKey] || '';
             document.getElementById('modal-todo-date').value = '';
             renderModalTodoList(subjectKey);
 
-            // モーダル表示アニメーション
             const modal = document.getElementById('subject-modal');
             const container = modal.querySelector('.modal-container');
             modal.classList.remove('hidden');
@@ -845,7 +675,6 @@ permalink: /
             }, 10);
         }
 
-        // モーダルを閉じる
         function closeSubjectModal() {
             const modal = document.getElementById('subject-modal');
             const container = modal.querySelector('.modal-container');
@@ -856,7 +685,6 @@ permalink: /
             }, 150);
         }
 
-        // モーダル内の課題一覧描画
         function renderModalTodoList(subjectKey) {
             const listEl = document.getElementById('modal-todo-list');
             listEl.innerHTML = '';
@@ -864,25 +692,25 @@ permalink: /
             const todos = subjectTodos[subjectKey] || [];
 
             if (todos.length === 0) {
-                listEl.innerHTML = `<li class="text-xs text-slate-400 italic py-1">登録されている課題はありません</li>`;
+                listEl.innerHTML = `<li class="text-[11px] text-slate-400 italic">課題はありません</li>`;
                 return;
             }
 
             todos.forEach((todo, index) => {
                 const li = document.createElement('li');
-                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs gap-2 hover:bg-slate-100/80 transition-colors';
+                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md p-2 text-xs gap-2';
                 
                 const dateBadgeHtml = getDueDateBadge(todo.dueDate, todo.completed);
 
                 li.innerHTML = `
                     <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
                         <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
-                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate">${escapeHtml(todo.text)}</span>
+                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-800'} truncate text-xs">${escapeHtml(todo.text)}</span>
                     </label>
                     <div class="flex items-center gap-1.5 shrink-0">
                         ${dateBadgeHtml}
-                        <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1 transition-colors" title="削除">
-                            <i class="fa-solid fa-trash"></i>
+                        <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1">
+                            <i class="fa-solid fa-trash text-[10px]"></i>
                         </button>
                     </div>
                 `;
@@ -890,7 +718,6 @@ permalink: /
             });
         }
 
-        // 課題の完了状態更新
         function toggleTodoState(subjectKey, index) {
             if (subjectTodos[subjectKey] && subjectTodos[subjectKey][index]) {
                 subjectTodos[subjectKey][index].completed = !subjectTodos[subjectKey][index].completed;
@@ -900,7 +727,6 @@ permalink: /
             }
         }
 
-        // 課題・メモ一覧からの課題完了状態更新
         function toggleTodoStateFromSummary(subjectKey, index) {
             if (subjectTodos[subjectKey] && subjectTodos[subjectKey][index]) {
                 subjectTodos[subjectKey][index].completed = !subjectTodos[subjectKey][index].completed;
@@ -910,7 +736,6 @@ permalink: /
             }
         }
 
-        // 課題削除
         function deleteTodo(subjectKey, index) {
             if (subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey].splice(index, 1);
@@ -920,7 +745,6 @@ permalink: /
             }
         }
 
-        // 課題・メモ一覧からの課題削除
         function deleteTodoFromSummary(subjectKey, index) {
             if (subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey].splice(index, 1);
@@ -930,7 +754,6 @@ permalink: /
             }
         }
 
-        // 課題・メモ一覧からのメモ削除
         function deleteMemoFromSummary(subjectKey) {
             if (subjectMemos[subjectKey]) {
                 delete subjectMemos[subjectKey];
@@ -940,7 +763,6 @@ permalink: /
             }
         }
 
-        // 課題追加
         function addTodoItem() {
             if (!activeSelectedSubject) return;
             const input = document.getElementById('modal-todo-input');
@@ -967,7 +789,6 @@ permalink: /
             renderTimetable();
         }
 
-        // 全課題の件数バッジ更新
         function updateTodoBadgeCount() {
             let totalUncompleted = 0;
             Object.values(subjectTodos).forEach(list => {
@@ -983,14 +804,11 @@ permalink: /
             }
         }
 
-        // 課題・メモ一覧表示
         function openTodoSummaryModal() {
             const body = document.getElementById('todo-summary-body');
             body.innerHTML = '';
 
             let hasItems = false;
-
-            // 課題を集計し、期限が近い順（未完了優先）に並び替え
             const aggregatedItems = [];
 
             timetableData.forEach(item => {
@@ -1002,11 +820,8 @@ permalink: /
                 if (todos.length > 0 || memo.trim()) {
                     hasItems = true;
                     const dayObj = DAYS.find(d => d.code === item.day);
-
-                    // 各課題にオリジナルインデックスを付与
                     const sortedTodos = todos.map((t, origIdx) => ({ ...t, origIdx }));
                     
-                    // 期限が早い順にソート（未完了優先、日付設定なしは後回し）
                     sortedTodos.sort((a, b) => {
                         if (a.completed !== b.completed) return a.completed ? 1 : -1;
                         if (!a.dueDate) return 1;
@@ -1014,52 +829,32 @@ permalink: /
                         return a.dueDate.localeCompare(b.dueDate);
                     });
 
-                    aggregatedItems.push({
-                        item,
-                        subjectKey,
-                        dayObj,
-                        todos: sortedTodos,
-                        memo
-                    });
+                    aggregatedItems.push({ item, subjectKey, dayObj, todos: sortedTodos, memo });
                 }
-            });
-
-            // 提出期限が緊急な課題がある科目を上位に配置
-            aggregatedItems.sort((a, b) => {
-                const getEarliestDueDate = (itemObj) => {
-                    const uncompleted = itemObj.todos.filter(t => !t.completed && t.dueDate);
-                    if (uncompleted.length === 0) return '9999-99-99';
-                    return uncompleted[0].dueDate;
-                };
-                return getEarliestDueDate(a).localeCompare(getEarliestDueDate(b));
             });
 
             aggregatedItems.forEach(({ item, subjectKey, dayObj, todos, memo }) => {
                 const section = document.createElement('div');
-                section.className = 'bg-slate-50 p-3.5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all';
+                section.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs';
                 
                 let todosHtml = '';
                 if (todos.length > 0) {
                     todosHtml = `
-                        <div class="mt-2.5 space-y-1.5">
-                            ${todos.map((t) => {
-                                const dateBadgeHtml = getDueDateBadge(t.dueDate, t.completed);
-
-                                return `
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-white p-2 rounded-lg border border-slate-200/80 text-xs">
-                                    <label class="flex items-center gap-2 min-w-0 flex-1 cursor-pointer">
+                        <div class="mt-2 space-y-1">
+                            ${todos.map((t) => `
+                                <div class="flex items-center justify-between bg-white p-2 rounded border border-slate-200">
+                                    <label class="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
                                         <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodoStateFromSummary('${subjectKey}',${t.origIdx})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
-                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate">${escapeHtml(t.text)}</span>
+                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-800'} truncate text-xs">${escapeHtml(t.text)}</span>
                                     </label>
-                                    <div class="flex items-center justify-between sm:justify-end gap-1.5 shrink-0 pl-6 sm:pl-0">
-                                        ${dateBadgeHtml}
-                                        <button onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})" class="text-slate-400 hover:text-rose-500 px-1 transition-colors" title="課題を削除">
-                                            <i class="fa-solid fa-trash"></i>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        ${getDueDateBadge(t.dueDate, t.completed)}
+                                        <button onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})" class="text-slate-400 hover:text-rose-500 px-1">
+                                            <i class="fa-solid fa-trash text-[10px]"></i>
                                         </button>
                                     </div>
                                 </div>
-                                `;
-                            }).join('')}
+                            `).join('')}
                         </div>
                     `;
                 }
@@ -1067,24 +862,19 @@ permalink: /
                 let memoHtml = '';
                 if (memo.trim()) {
                     memoHtml = `
-                        <div class="mt-2.5 text-xs text-slate-700 bg-amber-50/60 p-2.5 rounded-lg border border-amber-200/70 flex items-start justify-between gap-2">
-                            <div class="break-all">
-                                <i class="fa-regular fa-note-sticky text-amber-600 mr-1.5"></i>${escapeHtml(memo)}
-                            </div>
-                            <button onclick="deleteMemoFromSummary('${subjectKey}')" class="text-slate-400 hover:text-rose-500 px-1 shrink-0 transition-colors" title="メモを削除">
-                                <i class="fa-solid fa-trash"></i>
+                        <div class="mt-2 text-xs text-slate-700 bg-amber-50 p-2 rounded border border-amber-200 flex items-start justify-between gap-1.5">
+                            <div><i class="fa-regular fa-note-sticky text-amber-600 mr-1.5"></i>${escapeHtml(memo)}</div>
+                            <button onclick="deleteMemoFromSummary('${subjectKey}')" class="text-slate-400 hover:text-rose-500 shrink-0">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
                             </button>
                         </div>
                     `;
                 }
 
                 section.innerHTML = `
-                    <div class="flex items-center justify-between border-b pb-2 border-slate-200/80">
-                        <span class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full ${CATEGORIES[item.category]?.bg || 'bg-slate-400'}"></span>
-                            ${item.subject}
-                        </span>
-                        <span class="text-[11px] font-medium text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">${dayObj.name} ${item.period}限</span>
+                    <div class="flex items-center justify-between border-b pb-1.5 border-slate-200">
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${item.subject}</span>
+                        <span class="text-[11px] text-slate-500 font-medium">${dayObj.name} ${item.period}限</span>
                     </div>
                     ${todosHtml}
                     ${memoHtml}
@@ -1093,12 +883,7 @@ permalink: /
             });
 
             if (!hasItems) {
-                body.innerHTML = `
-                    <div class="text-center py-8 text-slate-400 text-xs sm:text-sm">
-                        <i class="fa-solid fa-clipboard-check text-3xl mb-2 text-slate-300 block"></i>
-                        現在保存されている課題やメモはありません。<br>時間割の科目をクリックして追加できます。
-                    </div>
-                `;
+                body.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">現在保存されている課題やメモはありません。</div>`;
             }
 
             document.getElementById('todo-summary-modal').classList.remove('hidden');
@@ -1110,28 +895,21 @@ permalink: /
             });
         }
 
-        // イベントハンドラー設定
         document.addEventListener('DOMContentLoaded', () => {
             renderTimetable();
 
-            // 画面リサイズ時に再描画（レスポンシブ切り替え用）
             window.addEventListener('resize', renderTimetable);
-
-            // リアルタイム時計更新タイマー
             setInterval(updateCurrentTimeHighlight, 1000);
 
-            // 検索・フィルタ制御
             document.getElementById('search-input').addEventListener('input', renderTimetable);
             document.getElementById('category-filter').addEventListener('change', renderTimetable);
             document.getElementById('toggle-highlight').addEventListener('change', updateCurrentTimeHighlight);
 
-            // モーダル関連イベント
             document.getElementById('modal-close-btn').addEventListener('click', closeSubjectModal);
             document.getElementById('modal-save-btn').addEventListener('click', () => {
                 if (activeSelectedSubject) {
                     const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
-                    const memoVal = document.getElementById('modal-memo').value;
-                    subjectMemos[subjectKey] = memoVal;
+                    subjectMemos[subjectKey] = document.getElementById('modal-memo').value;
                     saveStoredData(STORAGE_KEY_MEMO, subjectMemos);
                 }
                 closeSubjectModal();
@@ -1143,7 +921,6 @@ permalink: /
                 if (e.key === 'Enter') addTodoItem();
             });
 
-            // 全課題・メモモーダル
             document.getElementById('todo-list-btn').addEventListener('click', openTodoSummaryModal);
             document.getElementById('todo-modal-close').addEventListener('click', () => {
                 document.getElementById('todo-summary-modal').classList.add('hidden');
@@ -1152,28 +929,10 @@ permalink: /
                 document.getElementById('todo-summary-modal').classList.add('hidden');
             });
 
-            // モーダル背景クリック時閉じ
             document.getElementById('subject-modal').addEventListener('click', (e) => {
                 if (e.target.id === 'subject-modal') closeSubjectModal();
             });
 
-            // 曜日切り替えタブ (スマホ)
-            document.querySelectorAll('.day-tab-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const target = e.currentTarget;
-                    document.querySelectorAll('.day-tab-btn').forEach(b => {
-                        b.classList.remove('active', 'bg-white', 'text-slate-700', 'shadow-xs', 'font-bold');
-                        b.classList.add('text-slate-600');
-                    });
-                    target.classList.add('active', 'bg-white', 'text-slate-700', 'shadow-xs', 'font-bold');
-                    target.classList.remove('text-slate-600');
-
-                    selectedDayFilter = target.dataset.day;
-                    renderTimetable();
-                });
-            });
-
-            // シミュレーターボタン
             const simBtn = document.getElementById('sim-btn');
             const simPanel = document.getElementById('sim-panel');
             simBtn.addEventListener('click', () => {
