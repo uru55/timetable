@@ -170,10 +170,6 @@ permalink: /
         #current-banner-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #current-banner-text .muted { opacity: .7; margin-left: 6px; }
         .live { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #34d399; }
-        #banner-focus-btn {
-            flex: none; padding: 3px 10px; border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent);
-            border-radius: 6px; background: transparent; color: var(--bg); font-size: 11px; font-weight: 700; cursor: pointer;
-        }
         @media (prefers-reduced-motion: no-preference) {
             .live { animation: pulse 1.8s ease-out infinite; }
         }
@@ -442,12 +438,12 @@ permalink: /
                 </div>
                 <div class="actions">
                     <span class="chip"><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg><span id="current-time-display">--:--</span></span>
-                    <button id="calendar-btn" class="tb" type="button" aria-label="年間予定を表示">
-                        <svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg><span class="lbl">年間予定</span>
-                    </button>
-                    <button id="todo-list-btn" class="tb strong" type="button">
+                    <button id="todo-list-btn" class="tb" type="button">
                         <svg class="i" aria-hidden="true"><use href="#i-list"/></svg><span>課題・メモ</span>
                         <span id="todo-badge" class="badge hidden">0</span>
+                    </button>
+                    <button id="calendar-btn" class="tb" type="button" aria-label="年間予定を表示">
+                        <svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg><span class="lbl">年間予定</span>
                     </button>
                 </div>
             </div>
@@ -473,7 +469,6 @@ permalink: /
                     <span class="tag">開講中</span>
                     <span id="current-banner-text"></span>
                 </div>
-                <button id="banner-focus-btn" type="button">位置を見る</button>
             </div>
         </div>
     </header>
@@ -615,6 +610,7 @@ permalink: /
                     month: '10月',
                     events: [
                         { date: '10/1(木)', desc: '後期授業開始', type: 'event' },
+                        { date: '10/9(金)', desc: '月曜授業（国語Ⅳ 4限）', type: 'event' },
                         { date: '10/12(月)', desc: 'スポーツの日', type: 'holiday' },
                         { date: '10/26(月)', desc: '大掃除・教室清掃', type: 'event' },
                         { date: '10/30-31', desc: '高専祭準備・高専祭', type: 'event' }
@@ -700,11 +696,11 @@ permalink: /
             { day: 'Thu', period: 4, subject: 'IoT・エッジコンピューティング', teacher: '千葉、力武', room: '8-401', category: 'ELECTIVE' },
             { day: 'Thu', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
 
-            // 金曜日
-            { day: 'Fri', period: 1, subject: '化学特論', teacher: '小松', room: '2-102', category: 'ELECTIVE' },
-            { day: 'Fri', period: 2, subject: '第Ⅰ類実験Ⅱ', teacher: '-', room: '-', category: 'REQUIRED' },
-            { day: 'Fri', period: 3, subject: '電気電子計測', teacher: '林(忠)', room: '2-102', category: 'REQUIRED' },
-            { day: 'Fri', period: 4, subject: 'ネットワークプログラミング', teacher: '小林(秀)', room: '8-401', category: 'ELECTIVE' },
+            // 金曜日 (10/9 月曜振替・国語Ⅳは4限目へ移動)
+            { day: 'Fri', period: 1, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
+            { day: 'Fri', period: 2, subject: '応用数学Ｂ', teacher: '長谷部', room: '2-102', category: 'REQUIRED' },
+            { day: 'Fri', period: 3, subject: '人文科学', teacher: '朱', room: '2-102', category: 'ELECTIVE' },
+            { day: 'Fri', period: 4, subject: '国語Ⅳ', teacher: '犬飼', room: '2-102', category: 'ELECTIVE' },
             { day: 'Fri', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
         ];
 
@@ -901,10 +897,6 @@ permalink: /
                 banner.classList.remove('hidden');
                 const room = activeData.room && activeData.room !== '-' ? `<span class="muted">${escapeHtml(activeData.room)}</span>` : '';
                 $('current-banner-text').innerHTML = `<strong>${activePeriod}限 ${escapeHtml(activeData.subject)}</strong>${room}`;
-
-                $('banner-focus-btn').onclick = () => {
-                    if (activeCell) activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                };
             } else {
                 banner.classList.add('hidden');
             }
