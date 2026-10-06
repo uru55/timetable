@@ -5,366 +5,584 @@ permalink: /
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
     <title>仙台高専 令和8年度後期時間割 | IT4</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans JP"', 'Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        nit: {
-                            50: '#f0f4f8',
-                            100: '#d9e2ec',
-                            500: '#102a43',
-                            600: '#0b69a3',
-                            700: '#035388',
-                            800: '#014361',
-                            900: '#00214d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
+        /* ==================== デザイントークン ==================== */
+        :root {
+            --bg: #edf0f5;
+            --surface: #ffffff;
+            --ink: #121a29;
+            --ink-2: #4a5568;
+            --ink-3: #7b8798;
+            --line: #d8dee8;
+
+            --req: #2447a6;       /* 必修 */
+            --req-tint: #e8eefc;
+            --ele: #0a7667;       /* 選択 */
+            --ele-tint: #e1f3ef;
+            --oth: #5f6b7c;
+            --oth-tint: #eef1f5;
+
+            --on-solid: #ffffff;
+            --today: rgba(36, 71, 166, .07);
+
+            --danger: #c0352b;
+            --danger-tint: #fde8e6;
+            --warn: #9a5b00;
+            --warn-tint: #fff1d6;
+            --ok-tint: #e7edf6;
+
+            --font: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+            --pw: 36px;           /* 時限列の幅 */
+            --gap: 1px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0e131b;
+                --surface: #161d28;
+                --ink: #e9eef6;
+                --ink-2: #a9b4c4;
+                --ink-3: #74829a;
+                --line: #273140;
+
+                --req: #86a5ff;
+                --req-tint: #18233f;
+                --ele: #47c9b3;
+                --ele-tint: #112d2a;
+                --oth: #8b97aa;
+                --oth-tint: #1b2330;
+
+                --on-solid: #0b1020;
+                --today: rgba(134, 165, 255, .09);
+
+                --danger: #ff8a80;
+                --danger-tint: #3a1c1b;
+                --warn: #f2b45a;
+                --warn-tint: #33260f;
+                --ok-tint: #202a38;
+            }
+        }
+
+        @media (min-width: 640px) {
+            :root { --pw: 76px; --gap: 2px; }
+        }
+
+        /* ==================== ベース ==================== */
+        * { box-sizing: border-box; }
+        html { -webkit-text-size-adjust: 100%; }
         body {
-            font-family: 'Noto Sans JP', 'Inter', sans-serif;
-            background-color: #f8fafc;
+            margin: 0;
+            min-height: 100dvh;
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--ink);
+            background: var(--bg);
+            -webkit-font-smoothing: antialiased;
+        }
+        button { font: inherit; color: inherit; }
+        h1, h2, h3, p { margin: 0; }
+        .hidden { display: none !important; }
+        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+        :focus-visible { outline: 2px solid var(--req); outline-offset: 2px; }
+
+        .cat-REQUIRED { --c: var(--req); --t: var(--req-tint); }
+        .cat-ELECTIVE { --c: var(--ele); --t: var(--ele-tint); }
+        .cat-OTHER    { --c: var(--oth); --t: var(--oth-tint); }
+
+        /* ==================== 上部バー ==================== */
+        .bar {
+            position: sticky; top: 0; z-index: 30;
+            background: color-mix(in srgb, var(--bg) 90%, transparent);
+            -webkit-backdrop-filter: saturate(1.4) blur(12px);
+            backdrop-filter: saturate(1.4) blur(12px);
+            border-bottom: 1px solid var(--line);
+        }
+        .bar-in { max-width: 1080px; margin: 0 auto; padding: 8px 12px; }
+        .bar-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .bar-row + .bar-row { margin-top: 8px; }
+
+        .brand h1 { font-size: 24px; font-weight: 900; line-height: 1.05; letter-spacing: .02em; }
+        .brand p { margin-top: 2px; font-size: 11px; color: var(--ink-3); }
+        .actions { display: flex; align-items: center; gap: 6px; }
+
+        .chip, .tb {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 32px; padding: 0 10px;
+            font-size: 12px; font-weight: 500;
+            color: var(--ink-2);
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+        .tb { position: relative; cursor: pointer; }
+        .tb:hover { background: color-mix(in srgb, var(--surface) 85%, var(--ink) 6%); }
+        .tb.strong { color: var(--ink); font-weight: 700; }
+        .badge {
+            position: absolute; top: -6px; right: -6px;
+            min-width: 18px; height: 18px; padding: 0 4px;
+            display: grid; place-items: center;
+            font-size: 10px; font-weight: 800;
+            color: #fff; background: #d6336c; border-radius: 9px;
         }
 
-        /* カスタムスクロールバー */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+        .lbl { display: none; }
+        @media (min-width: 640px) { .lbl { display: inline; } }
+
+        /* 区分フィルター */
+        .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 99px; }
+        .seg button {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 11px; border: 0; border-radius: 7px;
+            font-size: 12px; font-weight: 700; color: var(--ink-2);
+            background: transparent; cursor: pointer;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+        .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+        .seg .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+
+        /* トグル */
+        .switch { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2); cursor: pointer; user-select: none; }
+        .track { position: relative; width: 32px; height: 19px; border-radius: 10px; background: var(--line); transition: background .15s; flex: none; }
+        .track::after {
+            content: ""; position: absolute; top: 2px; left: 2px;
+            width: 15px; height: 15px; border-radius: 50%;
+            background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+            transition: transform .15s;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+        .sr:checked + .track { background: var(--ink); }
+        .sr:checked + .track::after { transform: translateX(13px); }
+        .sr:focus-visible + .track { outline: 2px solid var(--req); outline-offset: 2px; }
+
+        /* 授業中バー */
+        .now-bar { background: var(--ink); color: var(--bg); font-size: 12px; }
+        .now-in { max-width: 1080px; margin: 0 auto; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .now-l { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .now-l .tag { flex: none; font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 99px; background: var(--bg); color: var(--ink); }
+        #current-banner-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #current-banner-text .muted { opacity: .7; margin-left: 6px; }
+        .live { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #34d399; }
+        #banner-focus-btn {
+            flex: none; padding: 3px 10px; border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent);
+            border-radius: 6px; background: transparent; color: var(--bg); font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .live { animation: pulse 1.8s ease-out infinite; }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, .6); }
+            100% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
         }
 
-        /* 印刷設定 */
+        /* ==================== 時間割ボード ==================== */
+        main { max-width: 1080px; margin: 0 auto; padding: 10px 6px 32px; }
+        @media (min-width: 640px) { main { padding: 18px 20px 44px; } }
+
+        .print-title { display: none; }
+
+        .tt { display: grid; grid-template-columns: var(--pw) repeat(5, minmax(0, 1fr)); gap: var(--gap); }
+        .contents { display: contents; }
+
+        .dh { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 8px; border-radius: 8px; }
+        .dc { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 15px; font-weight: 800; }
+        .dd { font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+        .dh.is-today { background: var(--today); }
+        .dh.is-today .dc { background: var(--ink); color: var(--bg); }
+        .dh.is-today .dd { color: var(--ink); font-weight: 700; }
+
+        .pl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-variant-numeric: tabular-nums; }
+        .pn { font-size: 21px; font-weight: 900; line-height: 1; }
+        .pn small { margin-left: 1px; font-size: 9px; font-weight: 700; color: var(--ink-2); }
+        .pt { font-size: 9px; line-height: 1.3; color: var(--ink-3); text-align: center; }
+
+        .cell { display: flex; min-width: 0; min-height: 96px; padding: 2px; border-radius: 8px; }
+        .cell.is-today { background: var(--today); }
+        .cell.empty { align-items: center; justify-content: center; }
+        .cell.empty::after { content: ""; width: 10px; height: 2px; border-radius: 1px; background: var(--line); }
+
+        .card {
+            position: relative; flex: 1; min-width: 0;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 6px 6px 6px 7px;
+            text-align: left; cursor: pointer;
+            color: var(--ink); background: var(--t);
+            border: 0; border-left: 3px solid var(--c); border-radius: 6px;
+            transition: background .12s;
+        }
+        .card:hover { background: color-mix(in srgb, var(--t) 80%, var(--c) 14%); }
+        .card.dim { opacity: .28; filter: grayscale(.6); }
+
+        .sub {
+            font-size: 10.5px; font-weight: 700; line-height: 1.35;
+            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+            overflow: hidden; overflow-wrap: anywhere;
+        }
+        .card.has-pip .sub { padding-right: 15px; }
+        .meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 6px; font-size: 9px; line-height: 1.2; color: var(--ink-2); }
+        .tch { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .room {
+            margin-left: auto; max-width: 100%; padding: 1px 5px;
+            font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            background: var(--surface); border-radius: 4px;
+        }
+
+        .pip {
+            position: absolute; top: 5px; right: 5px;
+            min-width: 15px; height: 15px; padding: 0 3px;
+            display: grid; place-items: center;
+            font-size: 9px; font-weight: 800; line-height: 1;
+            color: var(--bg); background: var(--warn); border-radius: 8px;
+        }
+        .pip.over { background: var(--danger); }
+
+        /* 授業中のコマ: 塗りつぶして反転 */
+        .card.is-now { background: var(--c); color: var(--on-solid); }
+        .card.is-now .meta { color: inherit; opacity: .9; }
+        .card.is-now .room { background: color-mix(in srgb, var(--on-solid) 20%, transparent); }
+
+        @media (min-width: 640px) {
+            .cell { min-height: 104px; padding: 3px; }
+            .card { padding: 9px 10px 9px 11px; border-left-width: 4px; border-radius: 8px; }
+            .sub { font-size: 14px; -webkit-line-clamp: 3; }
+            .card.has-pip .sub { padding-right: 18px; }
+            .meta { font-size: 11px; margin-top: 8px; }
+            .tch { display: block; }
+            .dc { width: 32px; height: 32px; font-size: 16px; }
+            .dd { font-size: 11px; }
+            .pn { font-size: 28px; }
+            .pn small { font-size: 11px; }
+            .pt { font-size: 11px; }
+        }
+
+        /* ==================== モーダル ==================== */
+        .overlay {
+            position: fixed; inset: 0; z-index: 50;
+            display: flex; align-items: flex-end; justify-content: center;
+            background: rgba(10, 15, 25, .55);
+            -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+        }
+        .sheet {
+            display: flex; flex-direction: column;
+            width: 100%; max-width: 460px; max-height: 92dvh;
+            overflow: hidden; background: var(--surface); color: var(--ink);
+            border-radius: 18px 18px 0 0;
+        }
+        @media (min-width: 640px) {
+            .overlay { align-items: center; padding: 16px; }
+            .sheet { border-radius: 18px; max-height: 86dvh; }
+            .sheet.wide { max-width: 520px; }
+            .sheet.wide-xl { max-width: 780px; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .overlay:not(.hidden) { animation: fade .18s ease-out; }
+            .overlay:not(.hidden) .sheet { animation: rise .24s cubic-bezier(.2, .8, .2, 1); }
+        }
+        @keyframes fade { from { opacity: 0; } }
+        @keyframes rise { from { transform: translateY(28px); opacity: 0; } }
+
+        .sheet-head { position: relative; padding: 16px 52px 16px 18px; background: var(--c, var(--req)); color: var(--on-solid); }
+        .sheet-head.plain { background: var(--ink); color: var(--bg); padding: 14px 52px 14px 18px; }
+        .sheet-head h2 { font-size: 21px; font-weight: 900; line-height: 1.3; }
+        .sheet-head.plain h2 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .pill { padding: 2px 10px; font-size: 11px; font-weight: 700; border-radius: 99px; background: color-mix(in srgb, var(--on-solid) 18%, transparent); }
+        .x {
+            position: absolute; top: 10px; right: 10px;
+            width: 34px; height: 34px; display: grid; place-items: center;
+            font-size: 16px; color: inherit; cursor: pointer;
+            background: color-mix(in srgb, currentColor 16%, transparent);
+            border: 0; border-radius: 50%;
+        }
+
+        .sheet-body { display: grid; gap: 20px; padding: 16px 18px; overflow-y: auto; overscroll-behavior: contain; }
+        .sheet-foot {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+            background: var(--bg); border-top: 1px solid var(--line);
+        }
+        .sheet-foot small { font-size: 11px; color: var(--ink-3); }
+
+        .info { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+        .info-i { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .ico { width: 34px; height: 34px; display: grid; place-items: center; font-size: 17px; color: var(--ink-2); background: var(--oth-tint); border-radius: 99px; flex: none; }
+        .info-k { font-size: 11px; color: var(--ink-3); }
+        .info-v { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; line-height: 1.35; }
+
+        .sec h3 { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+        .sec h3 .i { font-size: 15px; color: var(--ink-2); }
+
+        .field {
+            width: 100%; padding: 8px 10px;
+            font: inherit; font-size: 16px; color: var(--ink);
+            background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+        }
+        @media (min-width: 640px) { .field { font-size: 13px; } }
+        .field.sm { width: auto; padding: 5px 8px; font-size: 13px; background: var(--surface); }
+        textarea.field { resize: vertical; min-height: 64px; line-height: 1.55; }
+
+        .add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        #modal-todo-input { flex: 1 1 140px; min-width: 0; }
+        #modal-todo-date { width: auto; flex: 0 0 auto; }
+
+        .btn {
+            padding: 8px 14px; font-size: 13px; font-weight: 700; line-height: 1.2;
+            color: var(--on-solid); background: var(--req);
+            border: 0; border-radius: 8px; cursor: pointer;
+        }
+        .btn:hover { filter: brightness(1.08); }
+        .btn.ink { background: var(--ink); color: var(--bg); }
+        .btn.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--line); }
+        .btn.warn { background: var(--warn); color: var(--bg); }
+
+        .list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+        #modal-todo-list { max-height: 168px; overflow-y: auto; }
+        .row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 8px 10px; font-size: 13px;
+            background: var(--bg); border-radius: 8px;
+        }
+        .row label { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; cursor: pointer; }
+        .row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--req); flex: none; }
+        .row .txt { overflow-wrap: anywhere; }
+        .row .txt.done { text-decoration: line-through; color: var(--ink-3); }
+        .row .end { display: flex; align-items: center; gap: 6px; flex: none; }
+        .icon-btn { display: grid; place-items: center; width: 28px; height: 28px; font-size: 14px; color: var(--ink-3); background: transparent; border: 0; border-radius: 6px; cursor: pointer; }
+        .icon-btn:hover { color: var(--danger); background: var(--danger-tint); }
+        .empty-note { font-size: 12px; color: var(--ink-3); padding: 2px 0; }
+
+        .bd { padding: 1px 6px; font-size: 10px; font-weight: 700; white-space: nowrap; border-radius: 5px; }
+        .bd.over { color: var(--danger); background: var(--danger-tint); }
+        .bd.today { color: var(--warn); background: var(--warn-tint); }
+        .bd.soon { color: var(--req); background: var(--req-tint); }
+        .bd.done { color: var(--ink-3); background: var(--ok-tint); }
+
+        .group { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+        .group-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+        .group-h strong { font-size: 14px; }
+        .group-h span { font-size: 11px; color: var(--ink-3); }
+        .group .list { margin-top: 8px; }
+        .memo { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-top: 8px; padding: 8px 10px; font-size: 13px; color: var(--warn); background: var(--warn-tint); border-radius: 8px; }
+        .memo .i { margin-right: 6px; vertical-align: -2px; }
+        .memo-t { overflow-wrap: anywhere; white-space: pre-wrap; }
+        .empty-big { padding: 28px 0; text-align: center; font-size: 13px; color: var(--ink-3); line-height: 1.8; }
+
+        /* 年間予定モーダルスタイル */
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;
+        }
+        .month-card {
+            background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .month-title {
+            font-size: 14px; font-weight: 800; color: var(--ink);
+            padding-bottom: 4px; border-bottom: 2px solid var(--req);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .event-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 12px; }
+        .event-item { display: flex; gap: 6px; align-items: baseline; line-height: 1.35; }
+        .event-date { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; flex: none; width: 48px; font-size: 11px; }
+        .event-desc { flex: 1; color: var(--ink); overflow-wrap: anywhere; }
+        .event-tag { font-size: 9px; padding: 1px 5px; border-radius: 4px; font-weight: 700; flex: none; }
+        .tag-exam { background: var(--danger-tint); color: var(--danger); }
+        .tag-event { background: var(--ele-tint); color: var(--ele); }
+        .tag-holiday { background: var(--warn-tint); color: var(--warn); }
+        .tag-off { background: var(--oth-tint); color: var(--oth); }
+
+        /* ==================== 印刷 ==================== */
         @media print {
-            .no-print {
-                display: none !important;
+            @page { size: A4 landscape; margin: 10mm; }
+            :root {
+                --bg: #fff; --surface: #fff; --ink: #121a29; --ink-2: #4a5568; --ink-3: #7b8798; --line: #cbd3de;
+                --req: #2447a6; --req-tint: #e8eefc; --ele: #0a7667; --ele-tint: #e1f3ef; --oth: #5f6b7c; --oth-tint: #eef1f5;
+                --on-solid: #fff; --today: transparent;
             }
-            body {
-                background: white !important;
-                color: black !important;
-                font-size: 10pt;
-            }
-            .print-container {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-            }
-            .timetable-grid {
-                display: grid !important;
-                grid-template-columns: 50px repeat(5, 1fr) !important;
-                gap: 1px !important;
-                background-color: #cbd5e1 !important;
-                border: 1px solid #94a3b8 !important;
-            }
-            .subject-card {
-                break-inside: avoid;
-                box-shadow: none !important;
-                border: 1px solid #cbd5e1 !important;
-                background: white !important;
-                color: black !important;
-                padding: 4px !important;
-            }
-            .print-header {
-                display: block !important;
-                margin-bottom: 10px;
-            }
+            .no-print { display: none !important; }
+            body { font-size: 10pt; }
+            main { max-width: none; padding: 0; }
+            .print-title { display: block; margin-bottom: 8px; font-size: 14pt; font-weight: 900; }
+            .cell { min-height: 78px; }
+            .card, .dh, .cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .card.is-now { background: var(--t); color: var(--ink); }
+            .card.is-now .room { background: var(--surface); }
+            .dh.is-today .dc { background: transparent; color: inherit; }
+            .pip { display: none; }
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+<body>
 
-    <!-- ヘッダー -->
-    <header class="bg-gradient-to-r from-slate-900 via-nit-900 to-indigo-950 text-white shadow-md sticky top-0 z-30 no-print">
-        <div class="w-full px-3 sm:px-6 py-2">
-            <div class="flex items-center justify-between gap-2">
-                
-                <!-- タイトルエリア -->
-                <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400 text-xs sm:text-sm font-bold shadow-inner shrink-0">
-                        <i class="fa-solid font-mono">IT</i>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xs sm:text-base font-bold tracking-tight text-white leading-tight">
-                            IT4
-                        </h1>
-                        <span class="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] px-2 py-0.5 rounded-full font-medium hidden sm:inline">後期</span>
-                    </div>
+    <!-- アイコン -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+        <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+        <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v11l-6 6H5zM13 21v-6h6"/></symbol>
+        <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+        <symbol id="i-door" viewBox="0 0 24 24"><path d="M6 21V4h12v17M3 21h18M14 12v.01"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+    </svg>
+
+    <!-- 上部バー -->
+    <header class="bar no-print">
+        <div class="bar-in">
+            <div class="bar-row">
+                <div class="brand">
+                    <h1>IT4</h1>
+                    <p>令和8年度 後期</p>
                 </div>
-
-                <!-- リアルタイム時計 -->
-                <div class="flex items-center gap-2 text-[10px] sm:text-xs">
-                    <div class="flex items-center gap-1 bg-slate-800/80 border border-slate-700/60 rounded px-2 py-1 text-slate-300">
-                        <i class="fa-regular fa-clock text-amber-400 text-[10px]"></i>
-                        <span id="current-time-display" class="font-mono font-medium">--:--</span>
-                    </div>
+                <div class="actions">
+                    <span class="chip"><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg><span id="current-time-display">--:--</span></span>
+                    <button id="calendar-btn" class="tb" type="button" aria-label="年間予定を表示">
+                        <svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg><span class="lbl">年間予定</span>
+                    </button>
+                    <button id="todo-list-btn" class="tb strong" type="button">
+                        <svg class="i" aria-hidden="true"><use href="#i-list"/></svg><span>課題・メモ</span>
+                        <span id="todo-badge" class="badge hidden">0</span>
+                    </button>
                 </div>
+            </div>
+            <div class="bar-row">
+                <div class="seg" id="category-filter" role="group" aria-label="区分で絞り込み">
+                    <button type="button" data-value="all" aria-pressed="true">すべて</button>
+                    <button type="button" data-value="REQUIRED" aria-pressed="false"><span class="dot cat-REQUIRED"></span>必修</button>
+                    <button type="button" data-value="ELECTIVE" aria-pressed="false"><span class="dot cat-ELECTIVE"></span>選択</button>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-highlight" class="sr" checked>
+                    <span class="track"></span>
+                    <span class="lbl">現在コマ強調</span>
+                </label>
+            </div>
+        </div>
 
+        <!-- 授業中バー -->
+        <div id="current-subject-banner" class="now-bar hidden">
+            <div class="now-in">
+                <div class="now-l">
+                    <span class="live"></span>
+                    <span class="tag">開講中</span>
+                    <span id="current-banner-text"></span>
+                </div>
+                <button id="banner-focus-btn" type="button">位置を見る</button>
             </div>
         </div>
     </header>
 
-    <!-- コントロールバー & フィルター -->
-    <div class="bg-white border-b border-slate-200 shadow-xs sticky top-[41px] sm:top-[49px] z-20 no-print">
-        <div class="w-full px-3 sm:px-6 py-1.5">
-            <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                
-                <!-- フィルター -->
-                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-                    <select id="category-filter" class="py-1 px-2 text-xs bg-slate-50 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium text-slate-700 shrink-0">
-                        <option value="all">全区分</option>
-                        <option value="REQUIRED">必修</option>
-                        <option value="ELECTIVE">選択</option>
-                    </select>
-                </div>
+    <main>
+        <p class="print-title">IT4 令和8年度 後期 時間割</p>
 
-                <!-- トグル & アクションボタン -->
-                <div class="flex items-center gap-2 shrink-0">
-                    <label class="inline-flex items-center cursor-pointer bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-md px-2 py-1 text-xs text-slate-700 select-none">
-                        <input type="checkbox" id="toggle-highlight" class="sr-only peer" checked>
-                        <div class="relative w-7 h-3.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 peer-checked:bg-blue-600"></div>
-                        <span class="ml-1.5 text-xs font-medium hidden sm:inline">現在コマ強調</span>
-                    </label>
+        <div id="timetable-grid" class="tt">
+            <div></div>
+            <div class="dh" data-day-code="Mon"><span class="dc">月</span><span class="dd"></span></div>
+            <div class="dh" data-day-code="Tue"><span class="dc">火</span><span class="dd"></span></div>
+            <div class="dh" data-day-code="Wed"><span class="dc">水</span><span class="dd"></span></div>
+            <div class="dh" data-day-code="Thu"><span class="dc">木</span><span class="dd"></span></div>
+            <div class="dh" data-day-code="Fri"><span class="dc">金</span><span class="dd"></span></div>
 
-                    <button id="sim-btn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-sliders text-blue-600 text-[10px]"></i>
-                        <span class="hidden sm:inline">テスト</span>
-                    </button>
-
-                    <button id="todo-list-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 relative">
-                        <i class="fa-solid fa-check-double text-indigo-600 text-[10px]"></i>
-                        <span>課題・メモ</span>
-                        <span id="todo-badge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
-                    </button>
-                </div>
-
-            </div>
+            <div id="timetable-body" class="contents"></div>
         </div>
-    </div>
-
-    <!-- 現在の授業案内バー -->
-    <div id="current-subject-banner" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1.5 text-xs shadow-md hidden no-print">
-        <div class="w-full px-1 sm:px-3 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 truncate">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-                <span class="font-bold text-[10px] uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded shrink-0">開講中</span>
-                <span id="current-banner-text" class="font-medium truncate">現在 [1限] 国語Ⅳ (2-102) が行われています</span>
-            </div>
-            <button id="banner-focus-btn" class="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded shrink-0">
-                位置を見る
-            </button>
-        </div>
-    </div>
-
-    <!-- シミュレーターコントロールパネル -->
-    <div id="sim-panel" class="bg-amber-50 border-b border-amber-200 p-2 hidden no-print">
-        <div class="w-full px-3 sm:px-6 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div class="flex items-center gap-1.5 font-semibold text-amber-800">
-                <i class="fa-solid fa-flask"></i> シミュレーター
-            </div>
-            <div class="flex items-center gap-2">
-                <select id="sim-day" class="bg-white border border-amber-300 rounded px-2 py-1 text-xs">
-                    <option value="1">月</option>
-                    <option value="2">火</option>
-                    <option value="3">水</option>
-                    <option value="4">木</option>
-                    <option value="5">金</option>
-                </select>
-                <input type="time" id="sim-time" value="09:00" class="bg-white border border-amber-300 rounded px-2 py-1 text-xs">
-                <button id="sim-apply-btn" class="bg-amber-600 text-white px-2.5 py-1 rounded text-xs font-medium hover:bg-amber-700">適用</button>
-                <button id="sim-reset-btn" class="bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-medium hover:bg-slate-300">解除</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- メインコンテンツエリア -->
-    <main class="flex-1 w-full mx-auto p-2 sm:p-4 print-container flex flex-col">
-
-        <!-- 時間割グリッド表示 -->
-        <div class="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-1 flex flex-col">
-            <div id="timetable-scroll-container" class="w-full h-full flex flex-col">
-                <div id="timetable-wrapper" class="w-full h-full flex flex-col">
-                    
-                    <!-- 時間割グリッド構造 -->
-                    <div id="timetable-grid" class="timetable-grid grid grid-cols-6 divide-x divide-y divide-slate-200 border-b border-slate-200 flex-1">
-                        
-                        <!-- 左上角セル -->
-                        <div class="bg-slate-100 p-1 flex flex-col justify-center items-center font-bold text-xs text-slate-500">
-                            <span>時限</span>
-                        </div>
-
-                        <!-- 曜日ヘッダー -->
-                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Mon">
-                            <span class="text-blue-600">月</span>
-                        </div>
-                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Tue">
-                            <span class="text-blue-600">火</span>
-                        </div>
-                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Wed">
-                            <span class="text-blue-600">水</span>
-                        </div>
-                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Thu">
-                            <span class="text-blue-600">木</span>
-                        </div>
-                        <div class="day-header bg-slate-50 py-2 px-1 text-center font-bold text-slate-700 text-xs sm:text-sm border-t-0" data-day-code="Fri">
-                            <span class="text-blue-600">金</span>
-                        </div>
-
-                        <!-- 1限〜5限 のセルがJSで動的に挿入 -->
-                        <div id="timetable-body" class="contents">
-                            <!-- JS側で時間割カードをレンダリング -->
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </main>
 
+    <!-- ==================== モーダル ==================== -->
 
-    <!-- ==================== モーダルダイアログ群 ==================== -->
-
-    <!-- 科目詳細 & メモ・課題モーダル -->
-    <div id="subject-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden modal-container">
-            
-            <!-- モーダルヘッダー -->
-            <div id="modal-header-bg" class="p-4 text-white bg-gradient-to-r from-blue-600 to-indigo-600 relative">
-                <button id="modal-close-btn" class="absolute top-3.5 right-3.5 text-white/80 hover:text-white bg-black/10 hover:bg-black/20 w-7 h-7 rounded-full flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
-                <div class="flex items-center gap-1.5 mb-1.5 flex-wrap pr-6">
-                    <span id="modal-category-badge" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold border border-white/30">
-                        必修
-                    </span>
-                    <span id="modal-period-badge" class="bg-black/20 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
-                        月曜 1限 (8:50 - 10:20)
-                    </span>
-                </div>
-                <h2 id="modal-title" class="text-lg sm:text-xl font-bold">国語Ⅳ</h2>
+    <!-- 年間予定 -->
+    <div id="calendar-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="calendar-modal-title">
+        <div class="sheet wide-xl">
+            <div class="sheet-head plain">
+                <button id="calendar-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+                <h2 id="calendar-modal-title"><svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg>令和8年度 広瀬キャンパス 年間行事予定 (後期)</h2>
             </div>
-
-            <!-- モーダルボディ -->
-            <div class="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
-                
-                <!-- 基本情報カード -->
-                <div class="grid grid-cols-2 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                            <i class="fa-solid fa-user-chalkboard text-xs"></i>
-                        </div>
-                        <div class="truncate">
-                            <div class="text-[10px] text-slate-500 font-medium">担当教員</div>
-                            <div id="modal-teacher" class="font-bold text-slate-800 truncate">犬飼</div>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0">
-                            <i class="fa-solid fa-door-open text-xs"></i>
-                        </div>
-                        <div class="truncate">
-                            <div class="text-[10px] text-slate-500 font-medium">使用教室</div>
-                            <div id="modal-room" class="font-bold text-slate-800 truncate">2-102</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 課題セクション -->
-                <div>
-                    <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-2">
-                        <i class="fa-solid fa-list-check text-indigo-600"></i>
-                        課題
-                    </h3>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="modal-todo-input" placeholder="新しい課題を追加..." 
-                               class="flex-1 text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <input type="date" id="modal-todo-date" 
-                               class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shrink-0 w-28">
-                        <button id="modal-todo-add-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium shrink-0">
-                            追加
-                        </button>
-                    </div>
-                    <ul id="modal-todo-list" class="space-y-1.5 max-h-36 overflow-y-auto">
-                        <!-- 動的生成リスト -->
-                    </ul>
-                </div>
-
-                <!-- メモセクション -->
-                <div>
-                    <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
-                        <i class="fa-regular fa-note-sticky text-amber-500"></i>
-                        メモ
-                    </h3>
-                    <textarea id="modal-memo" rows="2" placeholder="教科書、持参物、評価方法などのメモ..."
-                              class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500"></textarea>
-                </div>
-
+            <div class="sheet-body" id="calendar-modal-body"></div>
+            <div class="sheet-foot">
+                <small>※ 事情により変更される場合があります</small>
+                <button id="calendar-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
-
-            <!-- モーダルフッター -->
-            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
-                <span class="text-[10px] text-slate-400">※自動保存されます</span>
-                <button id="modal-save-btn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-xs">
-                    保存して閉じる
-                </button>
-            </div>
-
         </div>
     </div>
 
-
-    <!-- 課題・メモ一覧モーダル -->
-    <div id="todo-summary-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden no-print">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-            <div class="p-4 bg-indigo-900 text-white flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-indigo-300"></i>
-                    <h2 class="text-sm sm:text-base font-bold">課題・メモ一覧</h2>
+    <!-- 科目詳細 -->
+    <div id="subject-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="sheet">
+            <div id="modal-header-bg" class="sheet-head cat-REQUIRED">
+                <button id="modal-close-btn" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+                <div class="pills">
+                    <span id="modal-category-badge" class="pill">必修</span>
+                    <span id="modal-period-badge" class="pill"></span>
                 </div>
-                <button id="todo-modal-close" class="text-white/80 hover:text-white">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
+                <h2 id="modal-title"></h2>
             </div>
-            <div class="p-4 max-h-[65vh] overflow-y-auto space-y-3" id="todo-summary-body">
-                <!-- 動的に集計された課題・メモを表示 -->
+
+            <div class="sheet-body">
+                <div class="info">
+                    <div class="info-i">
+                        <span class="ico"><svg class="i" aria-hidden="true"><use href="#i-user"/></svg></span>
+                        <div>
+                            <div class="info-k">担当教員</div>
+                            <div id="modal-teacher" class="info-v"></div>
+                        </div>
+                    </div>
+                    <div class="info-i">
+                        <span class="ico"><svg class="i" aria-hidden="true"><use href="#i-door"/></svg></span>
+                        <div>
+                            <div class="info-k">使用教室</div>
+                            <div id="modal-room" class="info-v"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="sec">
+                    <h3><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>課題</h3>
+                    <div class="add-row">
+                        <input type="text" id="modal-todo-input" class="field" placeholder="課題を入力">
+                        <input type="date" id="modal-todo-date" class="field" aria-label="提出期限">
+                        <button id="modal-todo-add-btn" class="btn" type="button">追加</button>
+                    </div>
+                    <ul id="modal-todo-list" class="list"></ul>
+                </section>
+
+                <section class="sec">
+                    <h3><svg class="i" aria-hidden="true"><use href="#i-note"/></svg>メモ</h3>
+                    <textarea id="modal-memo" rows="3" class="field" placeholder="教科書、持ち物、評価方法など"></textarea>
+                </section>
             </div>
-            <div class="p-3 bg-slate-50 border-t border-slate-200 text-right">
-                <button id="todo-modal-close-btn" class="bg-slate-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg">
-                    閉じる
-                </button>
+
+            <div class="sheet-foot">
+                <small>閉じると自動で保存されます</small>
+                <button id="modal-save-btn" class="btn" type="button">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 課題・メモ一覧 -->
+    <div id="todo-summary-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="todo-summary-title">
+        <div class="sheet wide">
+            <div class="sheet-head plain">
+                <button id="todo-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+                <h2 id="todo-summary-title"><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>課題・メモ一覧</h2>
+            </div>
+            <div class="sheet-body" id="todo-summary-body"></div>
+            <div class="sheet-foot">
+                <span></span>
+                <button id="todo-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
         </div>
     </div>
 
 
     <script>
+        const $ = (id) => document.getElementById(id);
+        const icon = (name) => `<svg class="i" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+
         // 時限の標準定義
         const PERIODS = [
             { id: 1, name: '1限', start: '08:50', end: '10:20' },
@@ -383,13 +601,73 @@ permalink: /
             { code: 'Fri', name: '金曜日', short: '金' },
         ];
 
-        // 科目カテゴリ設定 (必修・選択)
+        // 科目区分 (必修・選択)
         const CATEGORIES = {
-            REQUIRED: { name: '必修', color: 'blue', bg: 'bg-blue-600', text: 'text-blue-700', border: 'border-blue-300', lightBg: 'bg-blue-50/70' },
-            ELECTIVE: { name: '選択', color: 'emerald', bg: 'bg-emerald-600', text: 'text-emerald-700', border: 'border-emerald-300', lightBg: 'bg-emerald-50/70' },
-            OTHER: { name: 'その他', color: 'slate', bg: 'bg-slate-500', text: 'text-slate-700', border: 'border-slate-300', lightBg: 'bg-blue-50/70' },
-            ELECTIVE: { name: '選択', color: 'emerald', bg: 'bg-emerald-600', text: 'text-emerald-700', border: 'border-emerald-300', lightBg: 'bg-emerald-50/70' },
-            OTHER: { name: 'その他', color: 'slate', bg: 'bg-slate-500', text: 'text-slate-700', border: 'border-slate-300', lightBg: 'bg-slate-50/70' }
+            REQUIRED: { name: '必修' },
+            ELECTIVE: { name: '選択' },
+            OTHER: { name: 'その他' }
+        };
+
+        // 年間予定データ (令和8年度 広瀬キャンパス 後期のみ)
+        const annualSchedule = {
+            secondHalf: [
+                {
+                    month: '10月',
+                    events: [
+                        { date: '10/1(木)', desc: '後期授業開始', type: 'event' },
+                        { date: '10/12(月)', desc: 'スポーツの日', type: 'holiday' },
+                        { date: '10/26(月)', desc: '大掃除・教室清掃', type: 'event' },
+                        { date: '10/30-31', desc: '高専祭準備・高専祭', type: 'event' }
+                    ]
+                },
+                {
+                    month: '11月',
+                    events: [
+                        { date: '11/1(日)', desc: '高専祭', type: 'event' },
+                        { date: '11/2(月)', desc: '学生休業日', type: 'off' },
+                        { date: '11/3(火)', desc: '文化の日', type: 'holiday' },
+                        { date: '11/10-13', desc: '研修旅行', type: 'event' },
+                        { date: '11/23(月)', desc: '勤労感謝の日', type: 'holiday' },
+                        { date: '11/25-27', desc: '後期中間試験', type: 'exam' }
+                    ]
+                },
+                {
+                    month: '12月',
+                    events: [
+                        { date: '12/21(月)', desc: '大掃除(4校時〜)', type: 'event' },
+                        { date: '12/24(木)', desc: '冬季休業開始', type: 'off' },
+                        { date: '12/29-31', desc: '年末年始休業', type: 'off' }
+                    ]
+                },
+                {
+                    month: '1月',
+                    events: [
+                        { date: '1/1(金)', desc: '元日', type: 'holiday' },
+                        { date: '1/2-3', desc: '年末年始休業', type: 'off' },
+                        { date: '1/6(水)', desc: '授業再開', type: 'event' },
+                        { date: '1/11(月)', desc: '成人の日', type: 'holiday' },
+                        { date: '1/16(土)', desc: '推薦入試(登校禁止)', type: 'exam' },
+                        { date: '1/28-29', desc: '後期期末試験', type: 'exam' }
+                    ]
+                },
+                {
+                    month: '2月',
+                    events: [
+                        { date: '2/1-2', desc: '後期期末試験', type: 'exam' },
+                        { date: '2/11(水)', desc: '建国記念の日', type: 'holiday' },
+                        { date: '2/14(日)', desc: '学力入試(登校禁止)', type: 'exam' },
+                        { date: '2/17(水)', desc: '終業式・予餞会', type: 'event' },
+                        { date: '2/18(木)', desc: '学年末・春季休業開始', type: 'off' },
+                        { date: '2/23(火)', desc: '天皇誕生日', type: 'holiday' }
+                    ]
+                },
+                {
+                    month: '3月',
+                    events: [
+                        { date: '3/1-31', desc: '春季休業', type: 'off' }
+                    ]
+                }
+            ]
         };
 
         // 時間割データ構造 (4年ITコース 令和8年度後期)
@@ -431,8 +709,8 @@ permalink: /
         ];
 
         // アプリケーション状態管理
-        let currentSimulatedTime = null;
         let activeSelectedSubject = null;
+        let categoryFilter = 'all';
 
         // LocalStorage キー
         const STORAGE_KEY_MEMO = 'nit_4it_timetable_memos_v1';
@@ -459,89 +737,95 @@ permalink: /
         let subjectMemos = loadStoredData(STORAGE_KEY_MEMO);
         let subjectTodos = loadStoredData(STORAGE_KEY_TODO);
 
-        function getDueDateBadge(dueDateStr, completed) {
-            if (!dueDateStr) return '';
-            if (completed) return `<span class="text-[9px] text-slate-400 bg-slate-100 px-1 rounded">完了</span>`;
-
-            const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            const [y, m, d] = dueDateStr.split('-').map(Number);
-            const targetDate = new Date(y, m - 1, d);
-
-            const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) {
-                return `<span class="text-[9px] font-bold text-rose-700 bg-rose-100 px-1 rounded">${Math.abs(diffDays)}日超過</span>`;
-            } else if (diffDays === 0) {
-                return `<span class="text-[9px] font-bold text-amber-800 bg-amber-100 px-1 rounded">今日まで</span>`;
-            } else {
-                return `<span class="text-[9px] text-blue-700 bg-blue-50 px-1 rounded">あと${diffDays}日</span>`;
-            }
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+            });
         }
 
-        // 時間割の初期化とレンダリング
-        function renderTimetable() {
-            const bodyContainer = document.getElementById('timetable-body');
-            bodyContainer.innerHTML = '';
+        function getNow() {
+            return new Date();
+        }
 
-            const categoryFilter = document.getElementById('category-filter').value;
+        function parseDate(str) {
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function startOfToday() {
+            const now = getNow();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        function getDueDateBadge(dueDateStr, completed) {
+            if (!dueDateStr) return '';
+            if (completed) return `<span class="bd done">完了</span>`;
+
+            const diffDays = Math.ceil((parseDate(dueDateStr) - startOfToday()) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return `<span class="bd over">${Math.abs(diffDays)}日超過</span>`;
+            if (diffDays === 0) return `<span class="bd today">今日まで</span>`;
+            return `<span class="bd soon">あと${diffDays}日</span>`;
+        }
+
+        // コマ右上の「未完了の課題数」表示
+        function todoPip(todos) {
+            const open = todos.filter(t => !t.completed);
+            if (open.length === 0) return '';
+            const today = startOfToday();
+            const overdue = open.some(t => t.dueDate && parseDate(t.dueDate) < today);
+            return `<span class="pip${overdue ? ' over' : ''}" aria-label="未完了の課題${open.length}件">${open.length}</span>`;
+        }
+
+        // 時間割の描画
+        function renderTimetable() {
+            const body = $('timetable-body');
+            body.innerHTML = '';
 
             PERIODS.forEach(period => {
-                // 左端の時限ラベルセル
-                const periodLabelCell = document.createElement('div');
-                periodLabelCell.className = 'bg-slate-50 p-1 flex flex-col justify-center items-center border-t border-slate-200 text-center select-none';
-                periodLabelCell.innerHTML = `
-                    <span class="font-extrabold text-slate-800 text-xs sm:text-sm">${period.id}限</span>
+                const label = document.createElement('div');
+                label.className = 'pl';
+                label.innerHTML = `
+                    <span class="pn">${period.id}<small>限</small></span>
+                    <span class="pt">${period.start.replace(/^0/, '')}<br>${period.end}</span>
                 `;
-                bodyContainer.appendChild(periodLabelCell);
+                body.appendChild(label);
 
-                // 各曜日のセル
                 DAYS.forEach(day => {
                     const item = timetableData.find(d => d.day === day.code && d.period === period.id);
                     const cell = document.createElement('div');
-                    
-                    cell.className = `p-1 relative flex flex-col`;
+                    cell.className = 'cell';
                     cell.dataset.day = day.code;
                     cell.dataset.period = period.id;
 
                     if (!item || item.subject === 'なし') {
-                        // 空きコマ表示
-                        cell.innerHTML = `
-                            <div class="h-full min-h-[50px] sm:min-h-[58px] rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-1 flex flex-col items-center justify-center text-slate-300">
-                                <span class="text-[10px]">空き</span>
-                            </div>
-                        `;
+                        cell.classList.add('empty');
+                        cell.setAttribute('aria-label', '空きコマ');
                     } else {
-                        const matchesCategory = (categoryFilter === 'all' || item.category === categoryFilter);
-
-                        const isMatch = matchesCategory;
-                        const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
-
                         const subjectKey = `${item.day}_${item.period}`;
-                        const todos = subjectTodos[subjectKey] || [];
+                        const pip = todoPip(subjectTodos[subjectKey] || []);
+                        const dim = categoryFilter !== 'all' && item.category !== categoryFilter;
+                        const hasTeacher = item.teacher && item.teacher !== '-';
+                        const hasRoom = item.room && item.room !== '-';
+                        const meta = (hasTeacher || hasRoom) ? `
+                            <div class="meta">
+                                ${hasTeacher ? `<span class="tch">${escapeHtml(item.teacher)}</span>` : ''}
+                                ${hasRoom ? `<span class="room">${escapeHtml(item.room)}</span>` : ''}
+                            </div>` : '';
+                        const aria = `${item.subject}、${day.name}${period.name}` + (hasRoom ? `、${item.room}` : '');
 
                         cell.innerHTML = `
-                            <div class="subject-card h-full min-h-[50px] sm:min-h-[58px] rounded-lg border ${catInfo.border} ${catInfo.lightBg} p-1.5 flex flex-col justify-between cursor-pointer hover:shadow-xs ${!isMatch ? 'opacity-25 grayscale-[50%]' : ''}"
-                                 onclick="openSubjectModal('${item.day}', ${item.period})">
-                                
-                                <div>
-                                    <!-- 科目名 -->
-                                    <h4 class="font-extrabold text-slate-900 text-[11px] sm:text-xs leading-tight line-clamp-2">
-                                        ${item.subject}
-                                    </h4>
-                                </div>
-
-                                <!-- 担当教員・教室名 -->
-                                <div class="flex items-center justify-between text-[9px] sm:text-[10px] text-slate-500 font-medium pt-1 mt-1 border-t border-slate-200/50 leading-none">
-                                    <span class="truncate max-w-[50px] sm:max-w-[70px]">${item.teacher}</span>
-                                    <span class="truncate text-slate-600 font-semibold bg-white/80 px-1 py-0.5 rounded">${item.room}</span>
-                                </div>
-                            </div>
+                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}${pip ? ' has-pip' : ''}"
+                                    aria-label="${escapeHtml(aria)}"
+                                    onclick="openSubjectModal('${item.day}', ${item.period})">
+                                <span class="sub">${escapeHtml(item.subject)}</span>
+                                ${meta}
+                                ${pip}
+                            </button>
                         `;
                     }
 
-                    bodyContainer.appendChild(cell);
+                    body.appendChild(cell);
                 });
             });
 
@@ -550,33 +834,43 @@ permalink: /
         }
 
         function updateCurrentTimeHighlight() {
-            const now = currentSimulatedTime ? new Date(currentSimulatedTime) : new Date();
+            const now = getNow();
 
             const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
             const daysStr = ['日', '月', '火', '水', '木', '金', '土'];
-            document.getElementById('current-time-display').innerText = `${daysStr[now.getDay()]} ${timeStr}`;
+            $('current-time-display').textContent = `${daysStr[now.getDay()]} ${timeStr}`;
 
-            const isHighlightEnabled = document.getElementById('toggle-highlight').checked;
-            
-            document.querySelectorAll('.timetable-grid [data-day]').forEach(el => {
-                const card = el.querySelector('.subject-card');
-                if (card) {
-                    card.classList.remove('ring-2', 'ring-blue-500', 'z-10');
-                }
-            });
-
-            const banner = document.getElementById('current-subject-banner');
-
-            if (!isHighlightEnabled) {
-                banner.classList.add('hidden');
-                return;
-            }
-
+            const isHighlightEnabled = $('toggle-highlight').checked;
             const dayOfWeek = now.getDay();
             const dayCodes = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const currentDayCode = dayCodes[dayOfWeek];
+            const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+            const currentDayCode = isWeekday ? dayCodes[dayOfWeek] : null;
 
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
+            // 曜日ヘッダーの日付 (土日は翌週の日付を表示)
+            const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const offset = dayOfWeek === 0 ? 1 : dayOfWeek === 6 ? 2 : -(dayOfWeek - 1);
+            monday.setDate(monday.getDate() + offset);
+            DAYS.forEach((d, i) => {
+                const dt = new Date(monday);
+                dt.setDate(monday.getDate() + i);
+                const dd = document.querySelector(`.dh[data-day-code="${d.code}"] .dd`);
+                if (dd) dd.textContent = `${dt.getMonth() + 1}/${dt.getDate()}`;
+            });
+
+            // 今日の列
+            document.querySelectorAll('.dh').forEach(el => {
+                el.classList.toggle('is-today', isHighlightEnabled && el.dataset.dayCode === currentDayCode);
+            });
+            document.querySelectorAll('.cell').forEach(el => {
+                el.classList.toggle('is-today', isHighlightEnabled && el.dataset.day === currentDayCode);
+            });
+
+            // 授業中のコマ
+            document.querySelectorAll('.card.is-now').forEach(card => card.classList.remove('is-now'));
+
+            const banner = $('current-subject-banner');
+
+            if (!isHighlightEnabled || !isWeekday) {
                 banner.classList.add('hidden');
                 return;
             }
@@ -592,33 +886,81 @@ permalink: /
                 }
             });
 
-            if (activePeriod) {
-                const activeCell = document.querySelector(`[data-day="${currentDayCode}"][data-period="${activePeriod}"]`);
-                const activeData = timetableData.find(d => d.day === currentDayCode && d.period === activePeriod);
+            if (!activePeriod) {
+                banner.classList.add('hidden');
+                return;
+            }
 
-                if (activeData && activeData.subject !== 'なし') {
-                    if (activeCell) {
-                        const card = activeCell.querySelector('.subject-card');
-                        if (card) {
-                            card.classList.add('ring-2', 'ring-blue-500', 'z-10');
-                        }
-                    }
+            const activeCell = document.querySelector(`.cell[data-day="${currentDayCode}"][data-period="${activePeriod}"]`);
+            const activeData = timetableData.find(d => d.day === currentDayCode && d.period === activePeriod);
 
-                    banner.classList.remove('hidden');
-                    document.getElementById('current-banner-text').innerText = 
-                        `現在 [${activePeriod}限] ${activeData.subject} (${activeData.room})`;
-                    
-                    document.getElementById('banner-focus-btn').onclick = () => {
-                        if (activeCell) activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    };
-                } else {
-                    banner.classList.add('hidden');
-                }
+            if (activeData && activeData.subject !== 'なし') {
+                const card = activeCell && activeCell.querySelector('.card');
+                if (card) card.classList.add('is-now');
+
+                banner.classList.remove('hidden');
+                const room = activeData.room && activeData.room !== '-' ? `<span class="muted">${escapeHtml(activeData.room)}</span>` : '';
+                $('current-banner-text').innerHTML = `<strong>${activePeriod}限 ${escapeHtml(activeData.subject)}</strong>${room}`;
+
+                $('banner-focus-btn').onclick = () => {
+                    if (activeCell) activeCell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                };
             } else {
                 banner.classList.add('hidden');
             }
         }
 
+        // ==================== 年間予定モーダル制御 ====================
+        function renderCalendarModal(tabKey = 'secondHalf') {
+            const body = $('calendar-modal-body');
+            body.innerHTML = '';
+
+            const list = annualSchedule[tabKey] || [];
+            const grid = document.createElement('div');
+            grid.className = 'calendar-grid';
+
+            const tagLabels = {
+                exam: { text: '試験・締切', class: 'tag-exam' },
+                event: { text: '行事', class: 'tag-event' },
+                holiday: { text: '祝日', class: 'tag-holiday' },
+                off: { text: '休業', class: 'tag-off' }
+            };
+
+            list.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'month-card';
+
+                const eventsHtml = m.events.map(e => {
+                    const tagInfo = tagLabels[e.type] || tagLabels.event;
+                    return `
+                        <li class="event-item">
+                            <span class="event-date">${escapeHtml(e.date)}</span>
+                            <span class="event-desc">${escapeHtml(e.desc)}</span>
+                            <span class="event-tag ${tagInfo.class}">${tagInfo.text}</span>
+                        </li>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="month-title"><span>${escapeHtml(m.month)}</span></div>
+                    <ul class="event-list">${eventsHtml}</ul>
+                `;
+                grid.appendChild(card);
+            });
+
+            body.appendChild(grid);
+        }
+
+        function openCalendarModal() {
+            renderCalendarModal('secondHalf');
+            $('calendar-modal').classList.remove('hidden');
+        }
+
+        function closeCalendarModal() {
+            $('calendar-modal').classList.add('hidden');
+        }
+
+        // ==================== 科目詳細モーダル制御 ====================
         function openSubjectModal(dayCode, periodId) {
             const item = timetableData.find(d => d.day === dayCode && d.period === periodId);
             if (!item || item.subject === 'なし') return;
@@ -627,55 +969,60 @@ permalink: /
             const subjectKey = `${dayCode}_${periodId}`;
             const catInfo = CATEGORIES[item.category] || CATEGORIES.OTHER;
 
-            document.getElementById('modal-title').innerText = item.subject;
-            document.getElementById('modal-teacher').innerText = item.teacher;
-            document.getElementById('modal-room').innerText = item.room;
+            $('modal-title').textContent = item.subject;
+            $('modal-teacher').textContent = item.teacher && item.teacher !== '-' ? item.teacher : '未設定';
+            $('modal-room').textContent = item.room && item.room !== '-' ? item.room : '未設定';
 
             const dayObj = DAYS.find(d => d.code === dayCode);
             const periodObj = PERIODS.find(p => p.id === periodId);
-            document.getElementById('modal-period-badge').innerText = `${dayObj.name} ${periodObj.name} (${periodObj.start}-${periodObj.end})`;
-            
-            document.getElementById('modal-category-badge').innerText = catInfo.name;
-            document.getElementById('modal-memo').value = subjectMemos[subjectKey] || '';
-            document.getElementById('modal-todo-date').value = '';
+            $('modal-period-badge').textContent = `${dayObj.name} ${periodObj.name} ${periodObj.start}–${periodObj.end}`;
+
+            $('modal-header-bg').className = `sheet-head cat-${item.category}`;
+            $('modal-category-badge').textContent = catInfo.name;
+            $('modal-memo').value = subjectMemos[subjectKey] || '';
+            $('modal-todo-input').value = '';$('modal-todo-date').value = '';
             renderModalTodoList(subjectKey);
 
-            const modal = document.getElementById('subject-modal');
-            modal.classList.remove('hidden');
+            $('subject-modal').classList.remove('hidden');
         }
 
+        // 閉じるときにメモを自動保存
         function closeSubjectModal() {
-            const modal = document.getElementById('subject-modal');
-            modal.classList.add('hidden');
+            if (activeSelectedSubject && !$('subject-modal').classList.contains('hidden')) {
+                const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
+                const value = $('modal-memo').value;
+                if (value.trim()) {
+                    subjectMemos[subjectKey] = value;
+                } else {
+                    delete subjectMemos[subjectKey];
+                }
+                saveStoredData(STORAGE_KEY_MEMO, subjectMemos);
+            }
+            $('subject-modal').classList.add('hidden');
         }
 
         function renderModalTodoList(subjectKey) {
-            const listEl = document.getElementById('modal-todo-list');
+            const listEl = $('modal-todo-list');
             listEl.innerHTML = '';
 
             const todos = subjectTodos[subjectKey] || [];
 
             if (todos.length === 0) {
-                listEl.innerHTML = `<li class="text-[11px] text-slate-400 italic">課題はありません</li>`;
+                listEl.innerHTML = `<li class="empty-note">課題はありません。上の欄から追加できます。</li>`;
                 return;
             }
 
             todos.forEach((todo, index) => {
                 const li = document.createElement('li');
-                li.className = 'flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md p-2 text-xs gap-2';
-                
-                const dateBadgeHtml = getDueDateBadge(todo.dueDate, todo.completed);
-
+                li.className = 'row';
                 li.innerHTML = `
-                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
-                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
-                        <span class="${todo.completed ? 'line-through text-slate-400' : 'text-slate-800'} truncate text-xs">${escapeHtml(todo.text)}</span>
+                    <label>
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})">
+                        <span class="txt${todo.completed ? ' done' : ''}">${escapeHtml(todo.text)}</span>
                     </label>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        ${dateBadgeHtml}
-                        <button onclick="deleteTodo('${subjectKey}', ${index})" class="text-slate-400 hover:text-rose-500 px-1">
-                            <i class="fa-solid fa-trash text-[10px]"></i>
-                        </button>
+                    <div class="end">
+                        ${getDueDateBadge(todo.dueDate, todo.completed)}
+                        <button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodo('${subjectKey}', ${index})">${icon('trash')}</button>
                     </div>
                 `;
                 listEl.appendChild(li);
@@ -729,8 +1076,8 @@ permalink: /
 
         function addTodoItem() {
             if (!activeSelectedSubject) return;
-            const input = document.getElementById('modal-todo-input');
-            const dateInput = document.getElementById('modal-todo-date');
+            const input = $('modal-todo-input');
+            const dateInput = $('modal-todo-date');
             const text = input.value.trim();
             const dueDate = dateInput.value;
             if (!text) return;
@@ -759,9 +1106,9 @@ permalink: /
                 totalUncompleted += list.filter(t => !t.completed).length;
             });
 
-            const badge = document.getElementById('todo-badge');
+            const badge = $('todo-badge');
             if (totalUncompleted > 0) {
-                badge.innerText = totalUncompleted;
+                badge.textContent = totalUncompleted;
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
@@ -769,11 +1116,10 @@ permalink: /
         }
 
         function openTodoSummaryModal() {
-            const body = document.getElementById('todo-summary-body');
+            const body = $('todo-summary-body');
             body.innerHTML = '';
 
             let hasItems = false;
-            const aggregatedItems = [];
 
             timetableData.forEach(item => {
                 if (item.subject === 'なし') return;
@@ -781,64 +1127,46 @@ permalink: /
                 const todos = subjectTodos[subjectKey] || [];
                 const memo = subjectMemos[subjectKey] || '';
 
-                if (todos.length > 0 || memo.trim()) {
-                    hasItems = true;
-                    const dayObj = DAYS.find(d => d.code === item.day);
-                    const sortedTodos = todos.map((t, origIdx) => ({ ...t, origIdx }));
-                    
-                    sortedTodos.sort((a, b) => {
-                        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-                        if (!a.dueDate) return 1;
-                        if (!b.dueDate) return -1;
-                        return a.dueDate.localeCompare(b.dueDate);
-                    });
+                if (todos.length === 0 && !memo.trim()) return;
+                hasItems = true;
 
-                    aggregatedItems.push({ item, subjectKey, dayObj, todos: sortedTodos, memo });
-                }
-            });
+                const dayObj = DAYS.find(d => d.code === item.day);
+                const sortedTodos = todos.map((t, origIdx) => ({ ...t, origIdx }));
+                sortedTodos.sort((a, b) => {
+                    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return a.dueDate.localeCompare(b.dueDate);
+                });
 
-            aggregatedItems.forEach(({ item, subjectKey, dayObj, todos, memo }) => {
-                const section = document.createElement('div');
-                section.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs';
-                
-                let todosHtml = '';
-                if (todos.length > 0) {
-                    todosHtml = `
-                        <div class="mt-2 space-y-1">
-                            ${todos.map((t) => `
-                                <div class="flex items-center justify-between bg-white p-2 rounded border border-slate-200">
-                                    <label class="flex items-center gap-2 cursor-pointer min-w-0 flex-1">
-                                        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodoStateFromSummary('${subjectKey}',${t.origIdx})" class="rounded text-blue-600 focus:ring-blue-500 shrink-0">
-                                        <span class="${t.completed ? 'line-through text-slate-400' : 'text-slate-800'} truncate text-xs">${escapeHtml(t.text)}</span>
-                                    </label>
-                                    <div class="flex items-center gap-1.5 shrink-0">
-                                        ${getDueDateBadge(t.dueDate, t.completed)}
-                                        <button onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})" class="text-slate-400 hover:text-rose-500 px-1">
-                                            <i class="fa-solid fa-trash text-[10px]"></i>
-                                        </button>
-                                    </div>
+                const todosHtml = sortedTodos.length ? `
+                    <ul class="list">
+                        ${sortedTodos.map(t => `
+                            <li class="row">
+                                <label>
+                                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodoStateFromSummary('${subjectKey}',${t.origIdx})">
+                                    <span class="txt${t.completed ? ' done' : ''}">${escapeHtml(t.text)}</span>
+                                </label>
+                                <div class="end">
+                                    ${getDueDateBadge(t.dueDate, t.completed)}
+                                    <button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})">${icon('trash')}</button>
                                 </div>
-                            `).join('')}
-                        </div>
-                    `;
-                }
+                            </li>
+                        `).join('')}
+                    </ul>` : '';
 
-                let memoHtml = '';
-                if (memo.trim()) {
-                    memoHtml = `
-                        <div class="mt-2 text-xs text-slate-700 bg-amber-50 p-2 rounded border border-amber-200 flex items-start justify-between gap-1.5">
-                            <div><i class="fa-regular fa-note-sticky text-amber-600 mr-1.5"></i>${escapeHtml(memo)}</div>
-                            <button onclick="deleteMemoFromSummary('${subjectKey}')" class="text-slate-400 hover:text-rose-500 shrink-0">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
-                            </button>
-                        </div>
-                    `;
-                }
+                const memoHtml = memo.trim() ? `
+                    <div class="memo">
+                        <div class="memo-t">${icon('note')}${escapeHtml(memo)}</div>
+                        <button type="button" class="icon-btn" aria-label="メモを削除" onclick="deleteMemoFromSummary('${subjectKey}')">${icon('trash')}</button>
+                    </div>` : '';
 
+                const section = document.createElement('div');
+                section.className = `group cat-${item.category}`;
                 section.innerHTML = `
-                    <div class="flex items-center justify-between border-b pb-1.5 border-slate-200">
-                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${item.subject}</span>
-                        <span class="text-[11px] text-slate-500 font-medium">${dayObj.name} ${item.period}限</span>
+                    <div class="group-h">
+                        <strong>${escapeHtml(item.subject)}</strong>
+                        <span>${dayObj.name} ${item.period}限</span>
                     </div>
                     ${todosHtml}
                     ${memoHtml}
@@ -847,80 +1175,60 @@ permalink: /
             });
 
             if (!hasItems) {
-                body.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">現在保存されている課題やメモはありません。</div>`;
+                body.innerHTML = `<div class="empty-big">課題やメモはまだありません。<br>時間割の科目をタップすると追加できます。</div>`;
             }
 
-            document.getElementById('todo-summary-modal').classList.remove('hidden');
+            $('todo-summary-modal').classList.remove('hidden');
         }
 
-        function escapeHtml(str) {
-            return str.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-            });
+        function closeTodoSummaryModal() {
+            $('todo-summary-modal').classList.add('hidden');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             renderTimetable();
-
-            window.addEventListener('resize', renderTimetable);
             setInterval(updateCurrentTimeHighlight, 1000);
 
-            document.getElementById('category-filter').addEventListener('change', renderTimetable);
-            document.getElementById('toggle-highlight').addEventListener('change', updateCurrentTimeHighlight);
+            // 区分フィルター
+            document.querySelectorAll('#category-filter button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    categoryFilter = btn.dataset.value;
+                    document.querySelectorAll('#category-filter button').forEach(b => {
+                        b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+                    });
+                    renderTimetable();
+                });
+            });
+            $('toggle-highlight').addEventListener('change', updateCurrentTimeHighlight);
 
-            document.getElementById('modal-close-btn').addEventListener('click', closeSubjectModal);
-            document.getElementById('modal-save-btn').addEventListener('click', () => {
-                if (activeSelectedSubject) {
-                    const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
-                    subjectMemos[subjectKey] = document.getElementById('modal-memo').value;
-                    saveStoredData(STORAGE_KEY_MEMO, subjectMemos);
-                }
-                closeSubjectModal();
-                renderTimetable();
+            // 年間予定モーダルイベント
+            $('calendar-btn').addEventListener('click', openCalendarModal);$('calendar-modal-close').addEventListener('click', closeCalendarModal);
+            $('calendar-modal-close-btn').addEventListener('click', closeCalendarModal);$('calendar-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'calendar-modal') closeCalendarModal();
             });
 
-            document.getElementById('modal-todo-add-btn').addEventListener('click', addTodoItem);
-            document.getElementById('modal-todo-input').addEventListener('keypress', (e) => {
+            // 科目モーダルイベント
+            $('modal-close-btn').addEventListener('click', () => { closeSubjectModal(); renderTimetable(); });
+            $('modal-save-btn').addEventListener('click', () => { closeSubjectModal(); renderTimetable(); });$('subject-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'subject-modal') { closeSubjectModal(); renderTimetable(); }
+            });
+
+            $('modal-todo-add-btn').addEventListener('click', addTodoItem);$('modal-todo-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') addTodoItem();
             });
 
-            document.getElementById('todo-list-btn').addEventListener('click', openTodoSummaryModal);
-            document.getElementById('todo-modal-close').addEventListener('click', () => {
-                document.getElementById('todo-summary-modal').classList.add('hidden');
-            });
-            document.getElementById('todo-modal-close-btn').addEventListener('click', () => {
-                document.getElementById('todo-summary-modal').classList.add('hidden');
+            // 課題・メモ一覧イベント
+            $('todo-list-btn').addEventListener('click', openTodoSummaryModal);$('todo-modal-close').addEventListener('click', closeTodoSummaryModal);
+            $('todo-modal-close-btn').addEventListener('click', closeTodoSummaryModal);$('todo-summary-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'todo-summary-modal') closeTodoSummaryModal();
             });
 
-            document.getElementById('subject-modal').addEventListener('click', (e) => {
-                if (e.target.id === 'subject-modal') closeSubjectModal();
-            });
-
-            const simBtn = document.getElementById('sim-btn');
-            const simPanel = document.getElementById('sim-panel');
-            simBtn.addEventListener('click', () => {
-                simPanel.classList.toggle('hidden');
-            });
-
-            document.getElementById('sim-apply-btn').addEventListener('click', () => {
-                const dayVal = parseInt(document.getElementById('sim-day').value);
-                const timeVal = document.getElementById('sim-time').value;
-
-                const [h, m] = timeVal.split(':').map(Number);
-                
-                const simDate = new Date();
-                const currentDay = simDate.getDay();
-                const distance = (dayVal - currentDay + 7) % 7;
-                simDate.setDate(simDate.getDate() + distance);
-                simDate.setHours(h, m, 0);
-
-                currentSimulatedTime = simDate;
-                updateCurrentTimeHighlight();
-            });
-
-            document.getElementById('sim-reset-btn').addEventListener('click', () => {
-                currentSimulatedTime = null;
-                updateCurrentTimeHighlight();
+            // Esc キーで閉じる
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                if (!$('calendar-modal').classList.contains('hidden')) closeCalendarModal();
+                if (!$('subject-modal').classList.contains('hidden')) { closeSubjectModal(); renderTimetable(); }
+                if (!$('todo-summary-modal').classList.contains('hidden')) closeTodoSummaryModal();
             });
         });
     </script>
