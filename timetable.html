@@ -224,7 +224,6 @@ permalink: /
             display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
             overflow: hidden; overflow-wrap: anywhere;
         }
-        .card.has-pip .sub { padding-right: 15px; }
         .meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 6px; font-size: 9px; line-height: 1.2; color: var(--ink-2); }
         .tch { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .room {
@@ -232,15 +231,6 @@ permalink: /
             font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             background: var(--surface); border-radius: 4px;
         }
-
-        .pip {
-            position: absolute; top: 5px; right: 5px;
-            min-width: 15px; height: 15px; padding: 0 3px;
-            display: grid; place-items: center;
-            font-size: 9px; font-weight: 800; line-height: 1;
-            color: var(--bg); background: var(--warn); border-radius: 8px;
-        }
-        .pip.over { background: var(--danger); }
 
         /* 授業中のコマ: 塗りつぶして反転 */
         .card.is-now { background: var(--c); color: var(--on-solid); }
@@ -251,7 +241,6 @@ permalink: /
             .cell { min-height: 104px; padding: 3px; }
             .card { padding: 9px 10px 9px 11px; border-left-width: 4px; border-radius: 8px; }
             .sub { font-size: 14px; -webkit-line-clamp: 3; }
-            .card.has-pip .sub { padding-right: 18px; }
             .meta { font-size: 11px; margin-top: 8px; }
             .tch { display: block; }
             .dc { width: 32px; height: 32px; font-size: 16px; }
@@ -475,7 +464,6 @@ permalink: /
             .card.is-now { background: var(--t); color: var(--ink); }
             .card.is-now .room { background: var(--surface); }
             .dh.is-today .dc { background: transparent; color: inherit; }
-            .pip { display: none; }
         }
     </style>
     <script>
@@ -1018,15 +1006,6 @@ permalink: /
             return `<span class="bd soon">あと${diffDays}日</span>`;
         }
 
-        // コマ右上の「未完了の課題数」表示
-        function todoPip(todos) {
-            const open = todos.filter(t => !t.completed);
-            if (open.length === 0) return '';
-            const today = startOfToday();
-            const overdue = open.some(t => t.dueDate && parseDate(t.dueDate) < today);
-            return `<span class="pip${overdue ? ' over' : ''}" aria-label="未完了の課題${open.length}件">${open.length}</span>`;
-        }
-
         // 時間割の描画
         function renderTimetable() {
             const body = $('timetable-body');
@@ -1053,7 +1032,6 @@ permalink: /
                         cell.setAttribute('aria-label', '空きコマ');
                     } else {
                         const subjectKey = `${item.day}_${item.period}`;
-                        const pip = todoPip(subjectTodos[subjectKey] || []);
                         const dim = categoryFilter !== 'all' && item.category !== categoryFilter;
                         const hasTeacher = item.teacher && item.teacher !== '-';
                         const hasRoom = item.room && item.room !== '-';
@@ -1065,12 +1043,11 @@ permalink: /
                         const aria = `${item.subject}、${day.name}${period.name}` + (hasRoom ? `、${item.room}` : '');
 
                         cell.innerHTML = `
-                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}${pip ? ' has-pip' : ''}"
+                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}"
                                     aria-label="${escapeHtml(aria)}"
                                     onclick="openSubjectModal('${item.day}', ${item.period})">
                                 <span class="sub">${escapeHtml(item.subject)}</span>
                                 ${meta}
-                                ${pip}
                             </button>
                         `;
                     }
