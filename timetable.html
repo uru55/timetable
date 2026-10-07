@@ -18,6 +18,10 @@ permalink: /
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
     <style>
         /* ==================== デザイントークン ==================== */
         :root {
@@ -466,6 +470,13 @@ permalink: /
         .notice-text { margin-top: 4px; font-size: 13px; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
         .notice-empty { padding: 28px 8px; text-align: center; font-size: 13px; color: var(--ink-3); }
 
+        .notice-admin { margin-bottom: 14px; padding: 12px; display: grid; gap: 8px; border: 1px dashed var(--req); border-radius: 12px; background: var(--surface); }
+        .notice-admin-head { font-size: 12px; font-weight: 700; color: var(--req); }
+        .notice-admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .notice-err { margin: 0; min-height: 1em; font-size: 12px; color: var(--warn); }
+        .notice-ops { margin-top: 8px; display: flex; gap: 8px; }
+        .notice-ops .btn { padding: 4px 12px; font-size: 12px; }
+
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             :root {
@@ -769,7 +780,7 @@ permalink: /
             </div>
             <div class="sheet-body" id="notice-modal-body"></div>
             <div class="sheet-foot">
-                <small></small>
+                <button id="notice-admin-btn" class="btn ghost" type="button" style="padding:6px 12px;font-size:12px">管理者</button>
                 <button id="notice-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
         </div>
@@ -1246,18 +1257,39 @@ permalink: /
             $('calendar-modal').classList.add('hidden');
         }
 
-        // ==================== お知らせ ====================
-        // お知らせを増やすときは、この配列の「先頭」に1件足す（idは前より大きい数にする）
-        const notices = [
-            // { id: 1, date: '2026-10-07', title: 'お知らせのタイトル', body: '本文（改行できます）' },
-        ];
+        // ==================== お知らせ（Firebase） ====================
+        // ※ apiKey などは公開前提の設定値です。書き込みはFirestoreのルールで管理者だけに制限しています。
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyALuD1Iw_LvgMcaYD1twnBCRQbvtLjO_fc",
+            authDomain: "timetable-14434.firebaseapp.com",
+            projectId: "timetable-14434",
+            storageBucket: "timetable-14434.firebasestorage.app",
+            messagingSenderId: "79300780666",
+            appId: "1:79300780666:web:65d0b524f81d85457bd1c3"
+        };
         const NOTICE_KEY = 'nit_4it_timetable_notice_seen_v1';
+        const NOTICE_CACHE_KEY = 'nit_4it_timetable_notices_cache_v1';
+
+        let notices = [];          // { docId, id(作成時刻ms), date, title, body }
+        let noticeDb = null, noticeAuth = null;
+        let isAdmin = false;
+        let noticeView = 'list';   // 'list' | 'login'
+        let noticeEditing = null;  // 編集中のdocId
+        let noticeSeenAtOpen = 0;
+
+        try { notices = JSON.parse(localStorage.getItem(NOTICE_CACHE_KEY) || '[]'); } catch (e) { notices = []; }
 
         function getNoticeSeen() {
             try { return Number(localStorage.getItem(NOTICE_KEY)) || 0; } catch (e) { return 0; }
         }
         function setNoticeSeen(n) {
             try { localStorage.setItem(NOTICE_KEY, String(n)); } catch (e) { /* 無視 */ }
+        }
+        function latestNoticeId() {
+            return notices.length ? Math.max(...notices.map(n => n.id)) : 0;
+        }
+        function isNoticeOpen() {
+            return !$('notice-modal').classList.contains('hidden');
         }
         function updateNoticeBadge() {
             const seen = getNoticeSeen();
@@ -1266,22 +1298,190 @@ permalink: /
             b.textContent = unread > 9 ? '9+' : String(unread);
             b.classList.toggle('hidden', unread === 0);
         }
-        function openNoticeModal() {
-            const seen = getNoticeSeen();
+        function todayStr() {
+            const d = new Date();
+            const z = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+        }
+
+        function initNoticeBackend() {
+            if (!window.firebase) return; // SDKが読み込めなかった（オフラインなど）
+            try {
+                firebase.initializeApp(FIREBASE_CONFIG);
+                noticeDb = firebase.firestore();
+                noticeAuth = firebase.auth();
+                noticeDb.collection('notices').orderBy('createdAt', 'desc').limit(100).onSnapshot(snap => {
+                    notices = snap.docs.map(d => {
+                        const v = d.data({ serverTimestamps: 'estimate' });
+                        const ms = v.createdAt && v.createdAt.toMillis ? v.createdAt.toMillis() : Date.now();
+                        return { docId: d.id, id: ms, date: v.date || '', title: v.title || '', body: v.body || '' };
+                    });
+                    try { localStorage.setItem(NOTICE_CACHE_KEY, JSON.stringify(notices)); } catch (e) { /* 無視 */ }
+                    if (isNoticeOpen()) { setNoticeSeen(latestNoticeId()); renderNoticeList(); }
+                    updateNoticeBadge();
+                }, err => { console.warn('notices', err); });
+                noticeAuth.onAuthStateChanged(u => {
+                    isAdmin = !!u;
+                    if (u) noticeView = 'list';
+                    $('notice-admin-btn').textContent = isAdmin ? 'ログアウト' : '管理者';
+                    if (isNoticeOpen()) renderNoticeFrame();
+                });
+            } catch (e) { console.warn('firebase init', e); }
+        }
+
+        function renderNoticeFrame() {
             const body = $('notice-modal-body');
-            if (!notices.length) {
-                body.innerHTML = '<p class="notice-empty">お知らせはありません</p>';
-            } else {
-                const sorted = notices.slice().sort((a, b) => b.id - a.id);
-                body.innerHTML = '<ul class="notice-list">' + sorted.map(n => `
-                    <li class="notice-item${n.id > seen ? ' new' : ''}">
-                        <div class="notice-meta">${n.id > seen ? '<span class="notice-new">NEW</span>' : ''}<span>${escapeHtml(n.date || '')}</span></div>
-                        <div class="notice-title">${escapeHtml(n.title || '')}</div>
-                        ${n.body ? `<div class="notice-text">${escapeHtml(n.body)}</div>` : ''}
-                    </li>`).join('') + '</ul>';
+            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-list-area"></div>';
+            const area = $('notice-admin-area');
+            if (noticeView === 'login' && !isAdmin) {
+                area.innerHTML = `
+                    <div class="notice-admin">
+                        <div class="notice-admin-head">管理者ログイン</div>
+                        <input id="nt-email" type="email" class="field" placeholder="メールアドレス" autocomplete="username">
+                        <input id="nt-pass" type="password" class="field" placeholder="パスワード" autocomplete="current-password">
+                        <div class="notice-admin-actions">
+                            <button class="btn ink" type="button" data-act="login">ログイン</button>
+                            <button class="btn ghost" type="button" data-act="back">戻る</button>
+                        </div>
+                        <p class="notice-err" id="nt-err"></p>
+                    </div>`;
+                return;
             }
+            if (isAdmin) {
+                area.innerHTML = `
+                    <div class="notice-admin">
+                        <div class="notice-admin-head" id="nt-head">管理者モード：お知らせを投稿</div>
+                        <input id="nt-title" type="text" class="field" placeholder="タイトル" maxlength="80">
+                        <textarea id="nt-body" rows="4" class="field" placeholder="本文（任意）" maxlength="1000"></textarea>
+                        <input id="nt-date" type="date" class="field" aria-label="日付" value="${todayStr()}">
+                        <div class="notice-admin-actions">
+                            <button class="btn ink" type="button" id="nt-post" data-act="post">投稿</button>
+                            <button class="btn ghost hidden" type="button" id="nt-cancel" data-act="cancel-edit">編集をやめる</button>
+                        </div>
+                        <p class="notice-err" id="nt-err"></p>
+                    </div>`;
+                noticeEditing = null;
+            }
+            renderNoticeList();
+        }
+
+        function renderNoticeList() {
+            const box = $('notice-list-area');
+            if (!box) return;
+            if (!notices.length) {
+                box.innerHTML = '<p class="notice-empty">お知らせはありません</p>';
+                return;
+            }
+            const sorted = notices.slice().sort((a, b) => b.id - a.id);
+            box.innerHTML = '<ul class="notice-list">' + sorted.map(n => {
+                const isNew = n.id > noticeSeenAtOpen;
+                return `
+                <li class="notice-item${isNew ? ' new' : ''}">
+                    <div class="notice-meta">${isNew ? '<span class="notice-new">NEW</span>' : ''}<span>${escapeHtml(n.date || '')}</span></div>
+                    <div class="notice-title">${escapeHtml(n.title || '')}</div>
+                    ${n.body ? `<div class="notice-text">${escapeHtml(n.body)}</div>` : ''}
+                    ${isAdmin ? `<div class="notice-ops">
+                        <button class="btn ghost" type="button" data-act="edit" data-id="${escapeHtml(n.docId)}">編集</button>
+                        <button class="btn warn" type="button" data-act="del" data-id="${escapeHtml(n.docId)}">削除</button>
+                    </div>` : ''}
+                </li>`;
+            }).join('') + '</ul>';
+        }
+
+        function setNoticeErr(msg) {
+            const e = $('nt-err');
+            if (e) e.textContent = msg || '';
+        }
+
+        async function postNotice() {
+            if (!noticeDb) { setNoticeErr('通信できません'); return; }
+            const title = $('nt-title').value.trim();
+            const text = $('nt-body').value.trim();
+            const date = $('nt-date').value || todayStr();
+            if (!title) { setNoticeErr('タイトルを入力してください'); return; }
+            const btn = $('nt-post');
+            btn.disabled = true;
+            setNoticeErr('');
+            try {
+                const col = noticeDb.collection('notices');
+                if (noticeEditing) {
+                    await col.doc(noticeEditing).update({ title, body: text, date });
+                } else {
+                    await col.add({ title, body: text, date, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                }
+                $('nt-title').value = '';
+                $('nt-body').value = '';
+                $('nt-date').value = todayStr();
+                stopNoticeEdit();
+            } catch (e) {
+                setNoticeErr('投稿できませんでした（権限がないか、通信エラーです）');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        function startNoticeEdit(docId) {
+            const n = notices.find(x => x.docId === docId);
+            if (!n || !$('nt-title')) return;
+            noticeEditing = docId;
+            $('nt-title').value = n.title;
+            $('nt-body').value = n.body;
+            $('nt-date').value = n.date || todayStr();
+            $('nt-head').textContent = '管理者モード：お知らせを編集';
+            $('nt-post').textContent = '更新';
+            $('nt-cancel').classList.remove('hidden');
+            $('notice-modal-body').scrollTop = 0;
+        }
+        function stopNoticeEdit() {
+            noticeEditing = null;
+            if (!$('nt-head')) return;
+            $('nt-head').textContent = '管理者モード：お知らせを投稿';
+            $('nt-post').textContent = '投稿';
+            $('nt-cancel').classList.add('hidden');
+            $('nt-title').value = '';
+            $('nt-body').value = '';
+            $('nt-date').value = todayStr();
+        }
+        async function deleteNotice(docId) {
+            if (!noticeDb || !confirm('このお知らせを削除しますか？')) return;
+            try { await noticeDb.collection('notices').doc(docId).delete(); }
+            catch (e) { setNoticeErr('削除できませんでした'); }
+        }
+        async function loginNotice() {
+            if (!noticeAuth) { setNoticeErr('通信できません'); return; }
+            const email = $('nt-email').value.trim();
+            const pass = $('nt-pass').value;
+            if (!email || !pass) { setNoticeErr('メールとパスワードを入力してください'); return; }
+            setNoticeErr('');
+            try { await noticeAuth.signInWithEmailAndPassword(email, pass); }
+            catch (e) { setNoticeErr('ログインできませんでした（メールかパスワードが違います）'); }
+        }
+
+        function onNoticeBodyClick(e) {
+            const t = e.target.closest('[data-act]');
+            if (!t) return;
+            const act = t.dataset.act;
+            if (act === 'post') postNotice();
+            else if (act === 'cancel-edit') stopNoticeEdit();
+            else if (act === 'edit') startNoticeEdit(t.dataset.id);
+            else if (act === 'del') deleteNotice(t.dataset.id);
+            else if (act === 'login') loginNotice();
+            else if (act === 'back') { noticeView = 'list'; renderNoticeFrame(); }
+        }
+        function onNoticeAdminBtn() {
+            if (isAdmin) {
+                if (noticeAuth) noticeAuth.signOut();
+            } else {
+                noticeView = noticeView === 'login' ? 'list' : 'login';
+                renderNoticeFrame();
+            }
+        }
+
+        function openNoticeModal() {
+            noticeSeenAtOpen = getNoticeSeen();
+            noticeView = 'list';
+            renderNoticeFrame();
             $('notice-modal').classList.remove('hidden');
-            if (notices.length) setNoticeSeen(Math.max(...notices.map(n => n.id)));
+            setNoticeSeen(Math.max(noticeSeenAtOpen, latestNoticeId()));
             updateNoticeBadge();
         }
         function closeNoticeModal() {
@@ -1587,6 +1787,9 @@ permalink: /
 
             // お知らせイベント
             updateNoticeBadge();
+            initNoticeBackend();
+            $('notice-modal-body').addEventListener('click', onNoticeBodyClick);
+            $('notice-admin-btn').addEventListener('click', onNoticeAdminBtn);
             $('notice-btn').addEventListener('click', openNoticeModal);
             $('notice-modal-close').addEventListener('click', closeNoticeModal);
             $('notice-modal-close-btn').addEventListener('click', closeNoticeModal);
