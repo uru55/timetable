@@ -442,37 +442,6 @@ permalink: /
             --bg-size: auto;
         }
 
-        /* ボタンの質感 */
-        :is(.btn, .tb, .seg button[aria-pressed="true"]):not(.ghost) {
-            background-image: var(--btn-img, none);
-            box-shadow: var(--btn-shadow, none);
-        }
-        :root[data-btn="grad"], [data-pbtn="grad"] {
-            --btn-img: linear-gradient(180deg, rgba(255,255,255,.32), rgba(0,0,0,.12));
-            --btn-shadow: 0 1px 2px rgba(0,0,0,.25);
-        }
-        :root[data-btn="solid"], [data-pbtn="solid"] {
-            --btn-img: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%, rgba(0,0,0,.10));
-            --btn-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 3px 0 rgba(0,0,0,.28), 0 4px 6px rgba(0,0,0,.15);
-        }
-        :root[data-btn="solid"] :is(.btn, .tb):not(.ghost):active {
-            transform: translateY(2px);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 1px 0 rgba(0,0,0,.28);
-        }
-        :root[data-btn="glass"], [data-pbtn="glass"] {
-            --btn-img: linear-gradient(135deg, rgba(255,255,255,.5), rgba(255,255,255,.04));
-            --btn-shadow: inset 0 0 0 1px rgba(255,255,255,.45), 0 2px 8px rgba(0,0,0,.14);
-        }
-        :root[data-btn="stripe"], [data-pbtn="stripe"] {
-            --btn-img: repeating-linear-gradient(45deg, rgba(255,255,255,.22) 0 6px, transparent 6px 12px);
-            --btn-shadow: none;
-        }
-        :root[data-btn="pill"], [data-pbtn="pill"] {
-            --btn-img: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0) 50%, rgba(0,0,0,.10));
-            --btn-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 2px 5px rgba(0,0,0,.2);
-        }
-        :root[data-btn="pill"] :is(.btn, .tb), [data-pbtn="pill"] .btn { border-radius: 99px; }
-
         /* 着せ替えモーダル */
         .opt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
         .opt-grid.sm { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
@@ -494,8 +463,6 @@ permalink: /
         }
         .pv.txt { align-items: center; font-size: 11px; color: var(--ink-2); }
         .pv i { width: 14px; height: 14px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .15); }
-        .btn-sample { display: block; width: 100%; text-align: center; pointer-events: none; }
-        .opt.bt { padding: 10px 8px 8px; }
 
         /* ==================== 印刷 ==================== */
         @media print {
@@ -543,15 +510,11 @@ permalink: /
             ['grid', '方眼'], ['ruled', 'ノート罫線'], ['checker', '市松'], ['waves', '波'],
             ['stars', '星'], ['grain', '紙のざらつき'], ['gradient', 'グラデーション']
         ];
-        const BTNS = [
-            ['flat', 'フラット'], ['grad', 'グラデ'], ['solid', '立体'],
-            ['glass', 'ガラス'], ['stripe', 'ストライプ'], ['pill', 'ぷっくり']
-        ];
         const VARS = ['--bg', '--surface', '--ink', '--ink-2', '--ink-3', '--line', '--req', '--req-tint', '--ele', '--ele-tint',
             '--oth', '--oth-tint', '--on-solid', '--today', '--danger', '--danger-tint', '--warn', '--warn-tint', '--ok-tint', '--pc', 'color-scheme'];
 
         const root = document.documentElement;
-        let state = { theme: 'default', pattern: 'auto', btn: 'flat' };
+        let state = { theme: 'default', pattern: 'auto' };
 
         function load() {
             try {
@@ -559,7 +522,6 @@ permalink: /
                 if (!s) return;
                 if (THEMES.some(t => t.id === s.theme)) state.theme = s.theme;
                 if (PATTERNS.some(p => p[0] === s.pattern)) state.pattern = s.pattern;
-                if (BTNS.some(b => b[0] === s.btn)) state.btn = s.btn;
             } catch (e) { /* 保存できない環境では毎回標準 */ }
         }
         function save() {
@@ -591,7 +553,6 @@ permalink: /
             }
             root.dataset.theme = t.id;
             root.dataset.pattern = state.pattern === 'auto' ? (t.pat || 'none') : state.pattern;
-            root.dataset.btn = state.btn;
         }
 
         load();
@@ -601,7 +562,6 @@ permalink: /
         window.addEventListener('beforeprint', () => {
             VARS.forEach(v => root.style.removeProperty(v));
             root.dataset.pattern = 'none';
-            root.dataset.btn = 'flat';
         });
         window.addEventListener('afterprint', apply);
 
@@ -610,7 +570,6 @@ permalink: /
             const modal = document.getElementById('theme-modal');
             const themeGrid = document.getElementById('theme-grid');
             const patGrid = document.getElementById('pattern-grid');
-            const btnGrid = document.getElementById('btn-grid');
             if (!modal) return;
 
             themeGrid.innerHTML = THEMES.map(t => {
@@ -631,27 +590,21 @@ permalink: /
                     ${id === 'auto' ? '<span class="pv txt">自動</span>' : `<span class="pv" data-p="${id}"></span>`}
                     <span>${name}</span></button>`).join('');
 
-            btnGrid.innerHTML = BTNS.map(([id, name]) => `
-                <button type="button" class="opt bt" data-btn-id="${id}" data-pbtn="${id}" aria-pressed="false">
-                    <span class="btn btn-sample">${name}</span></button>`).join('');
-
             function refresh() {
                 themeGrid.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeId === state.theme)));
                 patGrid.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.patternId === state.pattern)));
-                btnGrid.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.btnId === state.btn)));
             }
             function change(patch) { Object.assign(state, patch); save(); apply(); refresh(); }
 
             themeGrid.addEventListener('click', e => { const b = e.target.closest('.opt'); if (b) change({ theme: b.dataset.themeId }); });
             patGrid.addEventListener('click', e => { const b = e.target.closest('.opt'); if (b) change({ pattern: b.dataset.patternId }); });
-            btnGrid.addEventListener('click', e => { const b = e.target.closest('.opt'); if (b) change({ btn: b.dataset.btnId }); });
 
             const open = () => { refresh(); modal.classList.remove('hidden'); };
             const close = () => modal.classList.add('hidden');
             document.getElementById('theme-btn').addEventListener('click', open);
             document.getElementById('theme-modal-close').addEventListener('click', close);
             document.getElementById('theme-modal-close-btn').addEventListener('click', close);
-            document.getElementById('theme-reset').addEventListener('click', () => change({ theme: 'default', pattern: 'auto', btn: 'flat' }));
+            document.getElementById('theme-reset').addEventListener('click', () => change({ theme: 'default', pattern: 'auto' }));
             modal.addEventListener('click', e => { if (e.target === modal) close(); });
             document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
         }
@@ -683,7 +636,6 @@ permalink: /
                     <p>令和8年度 後期</p>
                 </div>
                 <div class="actions">
-                    <span class="chip"><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg><span id="current-time-display">--:--</span></span>
                     <button id="todo-list-btn" class="tb" type="button">
                         <svg class="i" aria-hidden="true"><use href="#i-list"/></svg><span>課題・メモ</span>
                         <span id="todo-badge" class="badge hidden">0</span>
@@ -837,10 +789,6 @@ permalink: /
                 <section class="sec">
                     <h3>背景の模様</h3>
                     <div id="pattern-grid" class="opt-grid sm"></div>
-                </section>
-                <section class="sec">
-                    <h3>ボタンの質感</h3>
-                    <div id="btn-grid" class="opt-grid sm"></div>
                 </section>
             </div>
             <div class="sheet-foot">
@@ -1108,10 +1056,6 @@ permalink: /
 
         function updateCurrentTimeHighlight() {
             const now = getNow();
-
-            const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
-            const daysStr = ['日', '月', '火', '水', '木', '金', '土'];
-            $('current-time-display').textContent = `${daysStr[now.getDay()]} ${timeStr}`;
 
             const isHighlightEnabled = $('toggle-highlight').checked;
             const dayOfWeek = now.getDay();
