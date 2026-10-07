@@ -1,6 +1,8 @@
 // 新しいお知らせ（notices）があれば、通知をオンにした全員にプッシュ通知を送る。
 // GitHub Actions から5分おきに実行される。
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const SITE_URL = 'https://uru55.github.io/timetable/';
 // この時間より古いお知らせは通知しない（Actionsが止まっていたときの古い通知を防ぐ）
@@ -12,10 +14,17 @@ async function main() {
     console.error('FIREBASE_SERVICE_ACCOUNT が設定されていません');
     process.exit(1);
   }
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
-  const db = admin.firestore();
+  let account;
+  try {
+    account = JSON.parse(raw);
+  } catch (e) {
+    console.error('FIREBASE_SERVICE_ACCOUNT がJSONとして読めません。鍵ファイルの中身を全部貼り直してください');
+    process.exit(1);
+  }
+  initializeApp({ credential: cert(account) });
+  const db = getFirestore();
 
-  const since = admin.firestore.Timestamp.fromMillis(Date.now() - WINDOW_MS);
+  const since = Timestamp.fromMillis(Date.now() - WINDOW_MS);
   const snap = await db.collection('notices').where('createdAt', '>', since).get();
   const targets = snap.docs
     .filter((d) => !d.get('pushedAt'))
@@ -37,7 +46,7 @@ async function main() {
 
     for (let i = 0; i < tokens.length; i += 500) {
       const chunk = tokens.slice(i, i + 500);
-      const res = await admin.messaging().sendEachForMulticast({
+      const res = await getMessaging().sendEachForMulticast({
         tokens: chunk,
         data: { title, body, url: SITE_URL, tag: 'notice-' + doc.id },
         webpush: { headers: { Urgency: 'high' } },
@@ -56,7 +65,7 @@ async function main() {
       console.log(`  送信 ${res.successCount} 成功 / ${res.failureCount} 失敗`);
     }
     // 送信できたら「通知済み」の印を付ける（次回以降は送らない）
-    await doc.ref.update({ pushedAt: admin.firestore.FieldValue.serverTimestamp() });
+    await doc.ref.update({ pushedAt: FieldValue.serverTimestamp() });
   }
 
   // 使えなくなったトークンを掃除する
