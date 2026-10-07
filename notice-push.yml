@@ -1,0 +1,25 @@
+name: Send notice push
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # 5分おきに新しいお知らせを確認する
+  workflow_dispatch:         # 手動でも実行できる（動作テスト用）
+
+concurrency:
+  group: notice-push
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install firebase-admin
+        run: npm install firebase-admin --no-save
+      - name: Send push for new notices
+        run: node .github/scripts/send-notice-push.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

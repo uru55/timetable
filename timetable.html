@@ -21,6 +21,7 @@ permalink: /
     <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 
     <style>
         /* ==================== デザイントークン ==================== */
@@ -477,6 +478,13 @@ permalink: /
         .notice-ops { margin-top: 8px; display: flex; gap: 8px; }
         .notice-ops .btn { padding: 4px 12px; font-size: 12px; }
 
+        .due-banner { margin: 8px auto 0; max-width: 1100px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; }
+        .due-banner span { flex: 1; min-width: 0; }
+        .due-banner .btn { padding: 4px 12px; font-size: 12px; }
+        .push-card { margin-bottom: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+        .push-card span { flex: 1; min-width: 0; line-height: 1.5; }
+        .push-card .btn { padding: 4px 12px; font-size: 12px; white-space: nowrap; }
+
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             :root {
@@ -739,6 +747,12 @@ permalink: /
         </div>
     </header>
 
+    <div id="due-banner" class="due-banner hidden no-print" role="status">
+        <span id="due-banner-text"></span>
+        <button id="due-banner-open" class="btn ink" type="button">見る</button>
+        <button id="due-banner-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+
     <main>
         <p class="print-title">IT4 令和8年度 後期 時間割</p>
 
@@ -780,7 +794,7 @@ permalink: /
             </div>
             <div class="sheet-body" id="notice-modal-body"></div>
             <div class="sheet-foot">
-                <button id="notice-admin-btn" class="btn ghost" type="button" style="padding:6px 12px;font-size:12px">管理者</button>
+                <button id="notice-admin-btn" class="btn ghost hidden" type="button" style="padding:6px 12px;font-size:12px">管理者</button>
                 <button id="notice-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
         </div>
@@ -1323,7 +1337,8 @@ permalink: /
                 noticeAuth.onAuthStateChanged(u => {
                     isAdmin = !!u;
                     if (u) noticeView = 'list';
-                    $('notice-admin-btn').textContent = isAdmin ? 'ログアウト' : '管理者';
+                    $('notice-admin-btn').textContent = 'ログアウト';
+                    $('notice-admin-btn').classList.toggle('hidden', !isAdmin);
                     if (isNoticeOpen()) renderNoticeFrame();
                 });
             } catch (e) { console.warn('firebase init', e); }
@@ -1331,7 +1346,7 @@ permalink: /
 
         function renderNoticeFrame() {
             const body = $('notice-modal-body');
-            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-list-area"></div>';
+            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-push-area"></div><div id="notice-list-area"></div>';
             const area = $('notice-admin-area');
             if (noticeView === 'login' && !isAdmin) {
                 area.innerHTML = `
@@ -1345,6 +1360,7 @@ permalink: /
                         </div>
                         <p class="notice-err" id="nt-err"></p>
                     </div>`;
+                renderPushCard();
                 return;
             }
             if (isAdmin) {
@@ -1362,6 +1378,7 @@ permalink: /
                     </div>`;
                 noticeEditing = null;
             }
+            renderPushCard();
             renderNoticeList();
         }
 
@@ -1456,6 +1473,123 @@ permalink: /
             catch (e) { setNoticeErr('ログインできませんでした（メールかパスワードが違います）'); }
         }
 
+        // ==================== プッシュ通知（新しいお知らせ） ====================
+        // Firebase コンソール → プロジェクトの設定 → Cloud Messaging → ウェブプッシュ証明書 の「キーペア」を貼る
+        const VAPID_KEY = 'BPJvWPu6xiuJEvF0X6o6455drB1X5AStJzWuDeR8Yh7pR5PMMlpj9WSNZmMpMV31L_ChXI95MBvi7eFstEDNHj4';
+        const PUSH_REFRESH_KEY = 'nit_4it_timetable_push_refresh_v1';
+
+        function pushConfigured() {
+            return typeof VAPID_KEY === 'string' && VAPID_KEY.length > 60;
+        }
+        function pushSupported() {
+            try {
+                return pushConfigured() && 'Notification' in window && 'serviceWorker' in navigator
+                    && 'PushManager' in window && window.firebase && firebase.messaging && firebase.messaging.isSupported();
+            } catch (e) { return false; }
+        }
+        async function registerPushToken() {
+            if (!pushSupported() || !noticeDb) return false;
+            const reg = await navigator.serviceWorker.ready;
+            const token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+            if (!token) return false;
+            await noticeDb.collection('pushTokens').doc(token).set({
+                token: token,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            try { localStorage.setItem(PUSH_REFRESH_KEY, String(Date.now())); } catch (e) { /* 無視 */ }
+            return true;
+        }
+        function refreshPushTokenIfNeeded() {
+            if (!pushSupported() || Notification.permission !== 'granted') return;
+            let last = 0;
+            try { last = Number(localStorage.getItem(PUSH_REFRESH_KEY)) || 0; } catch (e) { /* 無視 */ }
+            if (Date.now() - last < 7 * 24 * 3600 * 1000) return;
+            registerPushToken().catch(() => {});
+        }
+        async function enablePush() {
+            if (!pushSupported()) { renderPushCard(); return; }
+            try {
+                const perm = await Notification.requestPermission();
+                if (perm === 'granted') await registerPushToken();
+            } catch (e) { console.warn('push', e); }
+            renderPushCard();
+            checkDueReminders();
+        }
+        async function disablePush() {
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+                if (token) await noticeDb.collection('pushTokens').doc(token).delete();
+                await firebase.messaging().deleteToken();
+            } catch (e) { console.warn('push off', e); }
+            renderPushCard();
+        }
+        function renderPushCard() {
+            const box = $('notice-push-area');
+            if (!box) return;
+            if (!pushConfigured()) { box.innerHTML = ''; return; }
+            if (!pushSupported()) {
+                box.innerHTML = '<div class="push-card"><span>この環境では通知を使えません。iPhoneは「ホーム画面に追加」したアプリで開くと使えます。</span></div>';
+                return;
+            }
+            const perm = Notification.permission;
+            if (perm === 'granted') {
+                box.innerHTML = '<div class="push-card"><span>通知：オン（新しいお知らせ・課題の期限）</span><button class="btn ghost" type="button" data-act="push-off">オフにする</button></div>';
+            } else if (perm === 'denied') {
+                box.innerHTML = '<div class="push-card"><span>通知がブロックされています。ブラウザ（またはアプリ）の設定から、このサイトの通知を許可してください。</span></div>';
+            } else {
+                box.innerHTML = '<div class="push-card"><span>新しいお知らせや、期限が近い課題を通知で受け取れます。</span><button class="btn ink" type="button" data-act="push-on">通知をオンにする</button></div>';
+            }
+        }
+
+        // ==================== 課題の期限リマインド ====================
+        const DUE_NOTIFIED_KEY = 'nit_4it_timetable_due_notified_v1';
+
+        function collectDueTodos() {
+            const today = startOfToday();
+            const r = { overdue: 0, today: 0, tomorrow: 0 };
+            Object.keys(subjectTodos).forEach(k => {
+                (subjectTodos[k] || []).forEach(t => {
+                    if (t.completed || !t.dueDate) return;
+                    const diff = Math.round((parseDate(t.dueDate) - today) / 86400000);
+                    if (diff < 0) r.overdue++;
+                    else if (diff === 0) r.today++;
+                    else if (diff === 1) r.tomorrow++;
+                });
+            });
+            return r;
+        }
+        function dueSummaryText(r) {
+            const parts = [];
+            if (r.overdue) parts.push('期限切れ ' + r.overdue + '件');
+            if (r.today) parts.push('今日 ' + r.today + '件');
+            if (r.tomorrow) parts.push('明日 ' + r.tomorrow + '件');
+            return parts.join(' / ');
+        }
+        async function checkDueReminders() {
+            const r = collectDueTodos();
+            const total = r.overdue + r.today + r.tomorrow;
+            const banner = $('due-banner');
+            if (!total) { banner.classList.add('hidden'); return; }
+            const text = dueSummaryText(r);
+            $('due-banner-text').textContent = '⏰ 期限が近い課題があります：' + text;
+            if (!banner.dataset.closed) banner.classList.remove('hidden');
+            // 通知（1日1回）
+            try {
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                const key = todayStr() + ':' + total;
+                if (localStorage.getItem(DUE_NOTIFIED_KEY) === key) return;
+                localStorage.setItem(DUE_NOTIFIED_KEY, key);
+                const reg = await navigator.serviceWorker.ready;
+                await reg.showNotification('課題の期限が近づいています', {
+                    body: text,
+                    icon: 'icons/icon-192.png',
+                    tag: 'due-reminder',
+                    data: { url: './' }
+                });
+            } catch (e) { /* 無視 */ }
+        }
+
         function onNoticeBodyClick(e) {
             const t = e.target.closest('[data-act]');
             if (!t) return;
@@ -1466,13 +1600,47 @@ permalink: /
             else if (act === 'del') deleteNotice(t.dataset.id);
             else if (act === 'login') loginNotice();
             else if (act === 'back') { noticeView = 'list'; renderNoticeFrame(); }
+            else if (act === 'push-on') enablePush();
+            else if (act === 'push-off') disablePush();
         }
         function onNoticeAdminBtn() {
-            if (isAdmin) {
-                if (noticeAuth) noticeAuth.signOut();
-            } else {
-                noticeView = noticeView === 'login' ? 'list' : 'login';
-                renderNoticeFrame();
+            if (isAdmin && noticeAuth) noticeAuth.signOut();
+        }
+
+        /* 管理者ログイン画面を出す「合図」
+           ・お知らせ画面のタイトル「お知らせ」を、3秒以内に10回タップ
+           ・お知らせ画面を開いた状態で、キーボードから admin と入力（パソコン用） */
+        const SECRET_TAPS = 10;
+        const SECRET_TAP_MS = 3000;
+        const SECRET_WORD = 'admin';
+        let secretTapTimes = [];
+        let secretTyped = '';
+
+        function openAdminLogin() {
+            if (isAdmin || !isNoticeOpen()) return;
+            noticeView = 'login';
+            renderNoticeFrame();
+            const el = $('nt-email');
+            if (el) el.focus();
+        }
+        function onNoticeTitleTap() {
+            const now = Date.now();
+            secretTapTimes = secretTapTimes.filter(t => now - t < SECRET_TAP_MS);
+            secretTapTimes.push(now);
+            if (secretTapTimes.length >= SECRET_TAPS) {
+                secretTapTimes = [];
+                openAdminLogin();
+            }
+        }
+        function onSecretKey(e) {
+            if (!isNoticeOpen()) { secretTyped = ''; return; }
+            const tag = (e.target && e.target.tagName) || '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA') { secretTyped = ''; return; }
+            if (e.key.length !== 1) return;
+            secretTyped = (secretTyped + e.key.toLowerCase()).slice(-SECRET_WORD.length);
+            if (secretTyped === SECRET_WORD) {
+                secretTyped = '';
+                openAdminLogin();
             }
         }
 
@@ -1788,8 +1956,19 @@ permalink: /
             // お知らせイベント
             updateNoticeBadge();
             initNoticeBackend();
+            refreshPushTokenIfNeeded();
+            $('due-banner-open').addEventListener('click', openTodoSummaryModal);
+            $('due-banner-close').addEventListener('click', () => {
+                $('due-banner').dataset.closed = '1';
+                $('due-banner').classList.add('hidden');
+            });
+            checkDueReminders();
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDueReminders(); });
+            setInterval(checkDueReminders, 30 * 60 * 1000);
             $('notice-modal-body').addEventListener('click', onNoticeBodyClick);
             $('notice-admin-btn').addEventListener('click', onNoticeAdminBtn);
+            $('notice-modal-title').addEventListener('click', onNoticeTitleTap);
+            document.addEventListener('keydown', onSecretKey);
             $('notice-btn').addEventListener('click', openNoticeModal);
             $('notice-modal-close').addEventListener('click', closeNoticeModal);
             $('notice-modal-close-btn').addEventListener('click', closeNoticeModal);
