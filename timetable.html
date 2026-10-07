@@ -8,7 +8,7 @@ permalink: /
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="color-scheme" content="light dark">
     <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#2447a6">
+    <meta name="theme-color" content="#edf0f5">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="時間割">
@@ -558,6 +558,18 @@ permalink: /
             }
             root.dataset.theme = t.id;
             root.dataset.pattern = state.pattern === 'auto' ? (t.pat || 'none') : state.pattern;
+            syncThemeColor();
+        }
+
+        /* ホーム画面アプリのステータスバー色を、今の背景色に合わせる */
+        function syncThemeColor() {
+            try {
+                const c = getComputedStyle(root).getPropertyValue('--bg').trim();
+                if (!c) return;
+                let m = document.querySelector('meta[name="theme-color"]');
+                if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+                m.setAttribute('content', c);
+            } catch (e) { /* 無視 */ }
         }
 
         load();
