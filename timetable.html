@@ -1226,6 +1226,28 @@ permalink: /
             $('subject-modal').classList.add('hidden');
         }
 
+        // 課題の並び順: 未完了が先 → 期限が近い(過ぎたものを含む)順 → 期限なしは最後
+        function compareTodos(a, b) {
+            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+            if (!a.dueDate && !b.dueDate) return a.origIdx - b.origIdx;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return a.dueDate.localeCompare(b.dueDate) || a.origIdx - b.origIdx;
+        }
+        // 科目グループの並び順: 一番近い未完了の期限が早い科目を上に
+        function subjectGroupRank(item) {
+            const todos = subjectTodos[`${item.day}_${item.period}`] || [];
+            const open = todos.filter(t => !t.completed);
+            const dates = open.filter(t => t.dueDate).map(t => t.dueDate).sort();
+            if (dates.length) return [0, dates[0]];
+            if (open.length) return [1, ''];
+            return [2, ''];
+        }
+        function compareSubjectGroups(a, b) {
+            const ra = subjectGroupRank(a), rb = subjectGroupRank(b);
+            return (ra[0] - rb[0]) || ra[1].localeCompare(rb[1]);
+        }
+
         function renderModalTodoList(subjectKey) {
             const listEl = $('modal-todo-list');
             listEl.innerHTML = '';
@@ -1237,7 +1259,8 @@ permalink: /
                 return;
             }
 
-            todos.forEach((todo, index) => {
+            todos.map((t, origIdx) => ({ ...t, origIdx })).sort(compareTodos).forEach(todo => {
+                const index = todo.origIdx;
                 const li = document.createElement('li');
                 li.className = 'row';
                 li.innerHTML = `
@@ -1346,7 +1369,7 @@ permalink: /
 
             let hasItems = false;
 
-            timetableData.forEach(item => {
+            [...timetableData].sort(compareSubjectGroups).forEach(item => {
                 if (item.subject === 'なし') return;
                 const subjectKey = `${item.day}_${item.period}`;
                 const todos = subjectTodos[subjectKey] || [];
@@ -1357,12 +1380,7 @@ permalink: /
 
                 const dayObj = DAYS.find(d => d.code === item.day);
                 const sortedTodos = todos.map((t, origIdx) => ({ ...t, origIdx }));
-                sortedTodos.sort((a, b) => {
-                    if (a.completed !== b.completed) return a.completed ? 1 : -1;
-                    if (!a.dueDate) return 1;
-                    if (!b.dueDate) return -1;
-                    return a.dueDate.localeCompare(b.dueDate);
-                });
+                sortedTodos.sort(compareTodos);
 
                 const todosHtml = sortedTodos.length ? `
                     <ul class="list">
