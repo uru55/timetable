@@ -481,6 +481,9 @@ permalink: /
         .due-banner { margin: 8px auto 0; max-width: 1100px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; }
         .due-banner span { flex: 1; min-width: 0; }
         .due-banner .btn { padding: 4px 12px; font-size: 12px; }
+        .notice-head-row { display: flex; align-items: center; gap: 10px; }
+        .notice-push-btn { padding: 2px 9px; font-size: 10px; font-weight: 700; line-height: 1.5; color: var(--bg); background: transparent; border: 1px solid color-mix(in srgb, var(--bg) 55%, transparent); border-radius: 99px; cursor: pointer; white-space: nowrap; }
+        .notice-push-btn.on { color: var(--ink); background: var(--bg); border-color: var(--bg); }
         .push-card { margin-bottom: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
         .push-card span { flex: 1; min-width: 0; line-height: 1.5; }
         .push-card .btn { padding: 3px 9px; font-size: 11px; border-radius: 6px; white-space: nowrap; }
@@ -790,7 +793,10 @@ permalink: /
         <div class="sheet">
             <div class="sheet-head plain">
                 <button id="notice-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
-                <h2 id="notice-modal-title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>お知らせ</h2>
+                <div class="notice-head-row">
+                    <h2 id="notice-modal-title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>お知らせ</h2>
+                    <button id="notice-push-btn" class="notice-push-btn hidden" type="button"></button>
+                </div>
             </div>
             <div class="sheet-body" id="notice-modal-body"></div>
             <div class="sheet-foot">
@@ -1346,7 +1352,7 @@ permalink: /
 
         function renderNoticeFrame() {
             const body = $('notice-modal-body');
-            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-push-area"></div><div id="notice-list-area"></div>';
+            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-list-area"></div>';
             const area = $('notice-admin-area');
             if (noticeView === 'login' && !isAdmin) {
                 area.innerHTML = `
@@ -1525,21 +1531,32 @@ permalink: /
             renderPushCard();
         }
         function renderPushCard() {
-            const box = $('notice-push-area');
-            if (!box) return;
-            if (!pushConfigured()) { box.innerHTML = ''; return; }
+            const btn = $('notice-push-btn');
+            if (!btn) return;
+            btn.classList.remove('on');
+            if (!pushConfigured()) { btn.classList.add('hidden'); return; }
+            btn.classList.remove('hidden');
             if (!pushSupported()) {
-                box.innerHTML = '<div class="push-card"><span>この環境では通知を使えません。iPhoneは「ホーム画面に追加」したアプリで開くと使えます。</span></div>';
-                return;
-            }
-            const perm = Notification.permission;
-            if (perm === 'granted') {
-                box.innerHTML = '<div class="push-card"><span>通知：オン（新しいお知らせ・課題の期限）</span><button class="btn ghost" type="button" data-act="push-off">オフにする</button></div>';
-            } else if (perm === 'denied') {
-                box.innerHTML = '<div class="push-card"><span>通知がブロックされています。ブラウザ（またはアプリ）の設定から、このサイトの通知を許可してください。</span></div>';
+                btn.dataset.state = 'unsupported';
+                btn.textContent = '通知不可';
+            } else if (Notification.permission === 'granted') {
+                btn.dataset.state = 'on';
+                btn.textContent = '通知：オン';
+                btn.classList.add('on');
+            } else if (Notification.permission === 'denied') {
+                btn.dataset.state = 'denied';
+                btn.textContent = '通知：ブロック中';
             } else {
-                box.innerHTML = '<div class="push-card"><span>新しいお知らせや、期限が近い課題を通知で受け取れます。</span><button class="btn ink" type="button" data-act="push-on">通知をオンにする</button></div>';
+                btn.dataset.state = 'off';
+                btn.textContent = '通知をオンにする';
             }
+        }
+        function onPushBtnClick() {
+            const st = $('notice-push-btn').dataset.state;
+            if (st === 'off') enablePush();
+            else if (st === 'on') { if (confirm('通知をオフにしますか？')) disablePush(); }
+            else if (st === 'denied') alert('通知がブロックされています。ブラウザ（またはアプリ）の設定から、このサイトの通知を許可してください。');
+            else alert('この環境では通知を使えません。iPhoneは「ホーム画面に追加」したアプリで開くと使えます。');
         }
 
         // ==================== 課題の期限リマインド ====================
@@ -1967,6 +1984,7 @@ permalink: /
             setInterval(checkDueReminders, 30 * 60 * 1000);
             $('notice-modal-body').addEventListener('click', onNoticeBodyClick);
             $('notice-admin-btn').addEventListener('click', onNoticeAdminBtn);
+            $('notice-push-btn').addEventListener('click', onPushBtnClick);
             $('notice-modal-title').addEventListener('click', onNoticeTitleTap);
             document.addEventListener('keydown', onSecretKey);
             $('notice-btn').addEventListener('click', openNoticeModal);
