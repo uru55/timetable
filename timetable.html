@@ -456,6 +456,16 @@ permalink: /
         #game-frame { display: block; width: 100%; height: min(78dvh, 820px); border: 0; background: var(--surface); }
 
         /* ==================== 印刷 ==================== */
+        /* お知らせ */
+        .notice-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+        .notice-item { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+        .notice-item.new { border-color: var(--req); box-shadow: inset 3px 0 0 var(--req); }
+        .notice-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+        .notice-new { padding: 1px 7px; font-size: 10px; font-weight: 700; color: var(--on-solid); background: var(--req); border-radius: 99px; }
+        .notice-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+        .notice-text { margin-top: 4px; font-size: 13px; line-height: 1.6; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }
+        .notice-empty { padding: 28px 8px; text-align: center; font-size: 13px; color: var(--ink-3); }
+
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             :root {
@@ -559,6 +569,18 @@ permalink: /
             root.dataset.theme = t.id;
             root.dataset.pattern = state.pattern === 'auto' ? (t.pat || 'none') : state.pattern;
             syncThemeColor();
+            syncAppIcon(t.id);
+        }
+
+        /* ホーム画面に追加するときのアイコン・設定を、選んだテーマのものに切り替える */
+        function syncAppIcon(id) {
+            try {
+                const isDef = id === 'default';
+                const man = document.querySelector('link[rel="manifest"]');
+                const ico = document.querySelector('link[rel="apple-touch-icon"]');
+                if (man) man.setAttribute('href', isDef ? 'manifest.webmanifest' : 'manifest-' + id + '.webmanifest');
+                if (ico) ico.setAttribute('href', isDef ? 'icons/apple-touch-icon.png' : 'icons/' + id + '-180.png');
+            } catch (e) { /* 無視 */ }
         }
 
         /* ホーム画面アプリのステータスバー色を、今の背景色に合わせる */
@@ -651,6 +673,7 @@ permalink: /
         <symbol id="i-door" viewBox="0 0 24 24"><path d="M6 21V4h12v17M3 21h18M14 12v.01"/></symbol>
         <symbol id="i-link" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
         <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.5-1.9-.3-1 .4-2.1 1.5-2.1H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><path d="M7.5 11.5v.01M10 7.5v.01M14.5 7.5v.01M17 11.5v.01"/></symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
     </svg>
 
@@ -666,6 +689,10 @@ permalink: /
                     <button id="todo-list-btn" class="tb" type="button">
                         <svg class="i" aria-hidden="true"><use href="#i-list"/></svg><span>課題・メモ</span>
                         <span id="todo-badge" class="badge hidden">0</span>
+                    </button>
+                    <button id="notice-btn" class="tb" type="button" aria-label="お知らせ">
+                        <svg class="i" aria-hidden="true"><use href="#i-bell"/></svg><span class="lbl">お知らせ</span>
+                        <span id="notice-badge" class="badge hidden">0</span>
                     </button>
                     <button id="calendar-btn" class="tb" type="button" aria-label="年間予定を表示">
                         <svg class="i" aria-hidden="true"><use href="#i-calendar"/></svg><span class="lbl">年間予定</span>
@@ -729,6 +756,21 @@ permalink: /
             <div class="sheet-foot">
                 <small>※ 事情により変更される場合があります</small>
                 <button id="calendar-modal-close-btn" class="btn ink" type="button">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- お知らせ -->
+    <div id="notice-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="notice-modal-title">
+        <div class="sheet">
+            <div class="sheet-head plain">
+                <button id="notice-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+                <h2 id="notice-modal-title"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg>お知らせ</h2>
+            </div>
+            <div class="sheet-body" id="notice-modal-body"></div>
+            <div class="sheet-foot">
+                <small></small>
+                <button id="notice-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
         </div>
     </div>
@@ -1204,6 +1246,48 @@ permalink: /
             $('calendar-modal').classList.add('hidden');
         }
 
+        // ==================== お知らせ ====================
+        // お知らせを増やすときは、この配列の「先頭」に1件足す（idは前より大きい数にする）
+        const notices = [
+            // { id: 1, date: '2026-10-07', title: 'お知らせのタイトル', body: '本文（改行できます）' },
+        ];
+        const NOTICE_KEY = 'nit_4it_timetable_notice_seen_v1';
+
+        function getNoticeSeen() {
+            try { return Number(localStorage.getItem(NOTICE_KEY)) || 0; } catch (e) { return 0; }
+        }
+        function setNoticeSeen(n) {
+            try { localStorage.setItem(NOTICE_KEY, String(n)); } catch (e) { /* 無視 */ }
+        }
+        function updateNoticeBadge() {
+            const seen = getNoticeSeen();
+            const unread = notices.filter(n => n.id > seen).length;
+            const b = $('notice-badge');
+            b.textContent = unread > 9 ? '9+' : String(unread);
+            b.classList.toggle('hidden', unread === 0);
+        }
+        function openNoticeModal() {
+            const seen = getNoticeSeen();
+            const body = $('notice-modal-body');
+            if (!notices.length) {
+                body.innerHTML = '<p class="notice-empty">お知らせはありません</p>';
+            } else {
+                const sorted = notices.slice().sort((a, b) => b.id - a.id);
+                body.innerHTML = '<ul class="notice-list">' + sorted.map(n => `
+                    <li class="notice-item${n.id > seen ? ' new' : ''}">
+                        <div class="notice-meta">${n.id > seen ? '<span class="notice-new">NEW</span>' : ''}<span>${escapeHtml(n.date || '')}</span></div>
+                        <div class="notice-title">${escapeHtml(n.title || '')}</div>
+                        ${n.body ? `<div class="notice-text">${escapeHtml(n.body)}</div>` : ''}
+                    </li>`).join('') + '</ul>';
+            }
+            $('notice-modal').classList.remove('hidden');
+            if (notices.length) setNoticeSeen(Math.max(...notices.map(n => n.id)));
+            updateNoticeBadge();
+        }
+        function closeNoticeModal() {
+            $('notice-modal').classList.add('hidden');
+        }
+
         // ==================== 科目詳細モーダル制御 ====================
         // シラバスへのリンク（科目名 → subject_id）
         const SYLLABUS_BASE = 'https://syllabus.kosen-k.go.jp/Pages/PublicSyllabus?school_id=07&department_id=20&year=2023&lang=ja&subject_id=';
@@ -1501,6 +1585,15 @@ permalink: /
                 if (e.target.id === 'calendar-modal') closeCalendarModal();
             });
 
+            // お知らせイベント
+            updateNoticeBadge();
+            $('notice-btn').addEventListener('click', openNoticeModal);
+            $('notice-modal-close').addEventListener('click', closeNoticeModal);
+            $('notice-modal-close-btn').addEventListener('click', closeNoticeModal);
+            $('notice-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'notice-modal') closeNoticeModal();
+            });
+
             // 科目モーダルイベント
             $('modal-close-btn').addEventListener('click', () => { closeSubjectModal(); renderTimetable(); });
             $('modal-save-btn').addEventListener('click', () => { closeSubjectModal(); renderTimetable(); });$('subject-modal').addEventListener('click', (e) => {
@@ -1521,6 +1614,7 @@ permalink: /
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
                 if (!$('calendar-modal').classList.contains('hidden')) closeCalendarModal();
+                if (!$('notice-modal').classList.contains('hidden')) closeNoticeModal();
                 if (!$('subject-modal').classList.contains('hidden')) { closeSubjectModal(); renderTimetable(); }
                 if (!$('todo-summary-modal').classList.contains('hidden')) closeTodoSummaryModal();
             });

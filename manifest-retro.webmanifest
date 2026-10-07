@@ -1,0 +1,30 @@
+{
+  "id": "./",
+  "name": "仙台高専 IT4 時間割",
+  "short_name": "時間割",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4e3c1",
+  "theme_color": "#f4e3c1",
+  "icons": [
+    {
+      "src": "icons/retro-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/retro-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/retro-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
