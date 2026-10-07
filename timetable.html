@@ -452,6 +452,12 @@ permalink: /
         .pv.txt { align-items: center; font-size: 11px; color: var(--ink-2); }
         .pv i { width: 14px; height: 14px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .15); }
 
+
+        /* 隠しゲーム */
+        .sheet.game { max-width: 600px; }
+        .sheet.game .sheet-body { padding: 0; gap: 0; }
+        #game-frame { display: block; width: 100%; height: min(78dvh, 820px); border: 0; background: var(--surface); }
+
         /* ==================== 印刷 ==================== */
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
@@ -783,6 +789,17 @@ permalink: /
                 <span></span>
                 <button id="todo-modal-close-btn" class="btn ink" type="button">閉じる</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 隠しゲーム: マインスイーパー -->
+    <div id="game-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="game-modal-title">
+        <div class="sheet game">
+            <div class="sheet-head plain">
+                <button id="game-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+                <h2 id="game-modal-title">マインスイーパー</h2>
+            </div>
+            <div class="sheet-body" id="game-body"></div>
         </div>
     </div>
 
@@ -1475,5 +1492,215 @@ permalink: /
             });
         });
     </script>
+
+<script type="text/plain" id="game-src"><!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マインスイーパー</title>
+<style>
+:root{--bg:#eef3f4;--ink:#16303a;--cell:#2f6f80;--cell-h:#3a8397;--open:#d9e6e9;--line:#b9cdd2;--accent:#e0502f;--card:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a1f;--ink:#e3eef1;--cell:#3b7e90;--cell-h:#4a93a7;--open:#1c3039;--line:#2a4551;--accent:#ff7a59;--card:#16262d}}
+:root[data-theme="dark"]{--bg:#0e1a1f;--ink:#e3eef1;--cell:#3b7e90;--cell-h:#4a93a7;--open:#1c3039;--line:#2a4551;--accent:#ff7a59;--card:#16262d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+body{display:flex;justify-content:center;min-height:100%}
+main{width:100%;max-width:560px;padding:12px;display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
+h1{font-size:20px;margin:4px 0 0;font-weight:800}
+.bar{display:flex;gap:8px;align-items:stretch}
+.stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:11px;opacity:.7}
+button,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:44px;cursor:pointer}
+button:focus-visible,select:focus-visible,.c:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#mode[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ctl{display:flex;gap:8px}
+.ctl>*{flex:1}
+#board{display:grid;gap:2px;background:var(--line);border:2px solid var(--line);border-radius:10px;overflow:hidden;touch-action:manipulation;width:100%}
+.c{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--cell);font-weight:800;font-size:clamp(11px,4.2vw,22px);cursor:pointer;color:#fff;line-height:1}
+.c:hover{background:var(--cell-h)}
+.c.o{background:var(--open);cursor:default}
+.c.m{background:var(--accent)}
+.c.w{background:#a33;color:#fff}
+.n1{color:#2a6fdb}.n2{color:#2e8b57}.n3{color:#d6402b}.n4{color:#6b3fb5}.n5{color:#a0521c}.n6{color:#0f8f93}.n7{color:#333}.n8{color:#777}
+@media (prefers-color-scheme:dark){.n1{color:#6aa8ff}.n2{color:#5fd08d}.n3{color:#ff7d68}.n4{color:#b79bff}.n7{color:#ddd}}
+#msg{min-height:44px;text-align:center;font-weight:700;padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+.hint{font-size:12px;opacity:.7;margin:0;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+  <h1>マインスイーパー</h1>
+  <div class="bar">
+    <div class="stat"><b id="mines">0</b><span>残りの地雷</span></div>
+    <div class="stat"><b id="time">0</b><span>秒</span></div>
+    <div class="stat"><b id="best">-</b><span>ベスト</span></div>
+  </div>
+  <div class="ctl">
+    <select id="level" aria-label="難易度">
+      <option value="0">初級 9×9</option>
+      <option value="1">中級 12×16</option>
+      <option value="2">上級 16×24</option>
+    </select>
+    <button id="mode" aria-pressed="false">🚩 旗モード</button>
+    <button id="reset">もう一度</button>
+  </div>
+  <div id="board" role="grid" aria-label="盤面"></div>
+  <div id="msg" role="status">最初のマスをタップして開始</div>
+  <p class="hint">開く: タップ / クリック　旗: 長押し・右クリック・旗モード<br>数字をタップ: 周囲の旗が数と同じなら残りを一括で開く</p>
+</main>
+<script>
+const LV=[{c:9,r:9,m:10},{c:12,r:16,m:30},{c:16,r:24,m:62}];
+const $=id=>document.getElementById(id);
+const boardEl=$('board');
+let L,cells,started,over,flags,opened,timer,t0,flagMode=false;
+const bestKey=i=>'ms-best-'+i;
+function getBest(i){try{return localStorage.getItem(bestKey(i))}catch(e){return null}}
+function setBest(i,v){try{localStorage.setItem(bestKey(i),v)}catch(e){}}
+function init(){
+  L=LV[+$('level').value];
+  cells=Array.from({length:L.r*L.c},()=>({m:false,o:false,f:false,n:0}));
+  started=false;over=false;flags=0;opened=0;clearInterval(timer);
+  $('time').textContent=0;$('mines').textContent=L.m;
+  const b=getBest($('level').value);$('best').textContent=b?b+'秒':'-';
+  $('msg').textContent='最初のマスをタップして開始';
+  boardEl.style.gridTemplateColumns=`repeat(${L.c},1fr)`;
+  boardEl.innerHTML='';
+  cells.forEach((_,i)=>{
+    const d=document.createElement('div');d.className='c';d.dataset.i=i;d.tabIndex=i===0?0:-1;d.setAttribute('role','gridcell');
+    boardEl.appendChild(d);
+  });
+}
+const nb=i=>{const x=i%L.c,y=(i/L.c)|0,a=[];
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;
+    const nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<L.c&&ny<L.r)a.push(ny*L.c+nx)}return a};
+function place(safe){
+  const ban=new Set([safe,...nb(safe)]);
+  const pool=cells.map((_,i)=>i).filter(i=>!ban.has(i));
+  for(let k=pool.length-1;k>0;k--){const j=(Math.random()*(k+1))|0;[pool[k],pool[j]]=[pool[j],pool[k]]}
+  pool.slice(0,L.m).forEach(i=>cells[i].m=true);
+  cells.forEach((c,i)=>c.n=nb(i).filter(j=>cells[j].m).length);
+}
+function draw(i){
+  const c=cells[i],e=boardEl.children[i];
+  e.className='c';e.textContent='';
+  if(c.o){e.classList.add('o');if(c.m){e.classList.add('m');e.textContent='💣'}else if(c.n){e.textContent=c.n;e.classList.add('n'+c.n)}}
+  else if(c.f)e.textContent='🚩';
+}
+function reveal(i){
+  const st=[i];
+  while(st.length){
+    const k=st.pop(),c=cells[k];
+    if(c.o||c.f)continue;
+    c.o=true;opened++;draw(k);
+    if(c.m)return lose(k);
+    if(c.n===0)nb(k).forEach(j=>{if(!cells[j].o)st.push(j)});
+  }
+}
+function open(i){
+  if(over)return;
+  const c=cells[i];
+  if(c.f)return;
+  if(!started){started=true;place(i);t0=Date.now();timer=setInterval(()=>$('time').textContent=Math.floor((Date.now()-t0)/1000),250);$('msg').textContent='がんばって！'}
+  if(c.o){ // chord
+    if(!c.n)return;
+    const ns=nb(i);
+    if(ns.filter(j=>cells[j].f).length!==c.n)return;
+    ns.forEach(j=>{if(!over&&!cells[j].o&&!cells[j].f)reveal(j)});
+  }else reveal(i);
+  if(!over)checkWin();
+}
+function flag(i){
+  if(over||!started)return;
+  const c=cells[i];if(c.o)return;
+  c.f=!c.f;flags+=c.f?1:-1;$('mines').textContent=L.m-flags;draw(i);
+  if(navigator.vibrate)try{navigator.vibrate(15)}catch(e){}
+}
+function lose(k){
+  over=true;clearInterval(timer);
+  cells.forEach((c,i)=>{if(c.m&&!c.f){c.o=true;draw(i)}else if(!c.m&&c.f){boardEl.children[i].className='c w';boardEl.children[i].textContent='✖'}});
+  boardEl.children[k].classList.add('w');
+  $('msg').textContent='💥 地雷を踏みました。「もう一度」で再挑戦';
+}
+function checkWin(){
+  if(opened!==cells.length-L.m)return;
+  over=true;clearInterval(timer);
+  const s=Math.floor((Date.now()-t0)/1000);$('time').textContent=s;
+  cells.forEach((c,i)=>{if(c.m&&!c.f){c.f=true;draw(i)}});$('mines').textContent=0;
+  const lv=$('level').value,b=+getBest(lv);
+  let t='🎉 クリア！ '+s+'秒';
+  if(!b||s<b){setBest(lv,s);$('best').textContent=s+'秒';t+='（ベスト更新）'}
+  $('msg').textContent=t;
+}
+// input
+let pt=null,lp=false;
+boardEl.addEventListener('pointerdown',e=>{
+  const t=e.target.closest('.c');if(!t||e.button===2)return;
+  lp=false;const i=+t.dataset.i;
+  pt=setTimeout(()=>{lp=true;flag(i)},420);
+});
+const cancel=()=>{clearTimeout(pt)};
+boardEl.addEventListener('pointerup',e=>{
+  cancel();const t=e.target.closest('.c');if(!t||e.button===2)return;
+  if(lp){lp=false;return}
+  const i=+t.dataset.i;
+  if(flagMode&&!cells[i].o)flag(i);else open(i);
+});
+boardEl.addEventListener('pointerleave',cancel);
+boardEl.addEventListener('pointercancel',cancel);
+boardEl.addEventListener('contextmenu',e=>{e.preventDefault();const t=e.target.closest('.c');if(t)flag(+t.dataset.i)});
+boardEl.addEventListener('keydown',e=>{
+  const t=e.target.closest('.c');if(!t)return;const i=+t.dataset.i;
+  const mv={ArrowLeft:-1,ArrowRight:1,ArrowUp:-L.c,ArrowDown:L.c}[e.key];
+  if(mv!==undefined){e.preventDefault();const j=i+mv;if(j>=0&&j<cells.length&&Math.abs((j%L.c)-(i%L.c))<=1){t.tabIndex=-1;boardEl.children[j].tabIndex=0;boardEl.children[j].focus()}}
+  else if(e.key==='Enter'||e.key===' '){e.preventDefault();open(i)}
+  else if(e.key==='f'||e.key==='F')flag(i);
+});
+$('mode').onclick=()=>{flagMode=!flagMode;$('mode').setAttribute('aria-pressed',flagMode)};
+$('reset').onclick=init;
+$('level').onchange=init;
+init();
+<\/script>
+</body>
+</html>
+</script>
+<script>
+/* 隠しコマンド: 「現在コマ強調」を10回切り替えるとマインスイーパーが開く */
+(function () {
+    const toggle = document.getElementById('toggle-highlight');
+    const modal = document.getElementById('game-modal');
+    const body = document.getElementById('game-body');
+    if (!toggle || !modal) return;
+    const NEED = 10, GAP_MS = 5000;
+    let count = 0, last = 0;
+
+    function openGame() {
+        if (!body.firstChild) {
+            const f = document.createElement('iframe');
+            f.id = 'game-frame';
+            f.title = 'マインスイーパー';
+            f.srcdoc = document.getElementById('game-src').textContent.replace(/<\\\/script>/g, '<' + '/script>');
+            body.appendChild(f);
+        }
+        modal.classList.remove('hidden');
+    }
+    function closeGame() {
+        modal.classList.add('hidden');
+        body.innerHTML = ''; // 閉じたらゲームを破棄（タイマーも止まる）
+    }
+
+    toggle.addEventListener('change', () => {
+        const now = Date.now();
+        count = (now - last > GAP_MS) ? 1 : count + 1;
+        last = now;
+        if (count >= NEED) { count = 0; openGame(); }
+    });
+    document.getElementById('game-modal-close').addEventListener('click', closeGame);
+    modal.addEventListener('click', e => { if (e.target === modal) closeGame(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeGame(); });
+})();
+</script>
 </body>
 </html>
