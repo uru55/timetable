@@ -327,6 +327,8 @@ permalink: /
         }
         .btn:hover { filter: brightness(1.08); }
         .btn.ink { background: var(--ink); color: var(--bg); }
+        a.btn.syl { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        a.btn.hidden { display: none; }
         .btn.ghost { background: transparent; color: var(--ink-2); border: 1px solid var(--line); }
         .btn.warn { background: var(--warn); color: var(--bg); }
 
@@ -629,6 +631,7 @@ permalink: /
         <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v11l-6 6H5zM13 21v-6h6"/></symbol>
         <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
         <symbol id="i-door" viewBox="0 0 24 24"><path d="M6 21V4h12v17M3 21h18M14 12v.01"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
         <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.5-1.9-.3-1 .4-2.1 1.5-2.1H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><path d="M7.5 11.5v.01M10 7.5v.01M14.5 7.5v.01M17 11.5v.01"/></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
     </svg>
@@ -741,6 +744,10 @@ permalink: /
                         </div>
                     </div>
                 </div>
+
+                <a id="modal-syllabus" class="btn ghost syl hidden" href="#" target="_blank" rel="noopener noreferrer">
+                    <svg class="i" aria-hidden="true"><use href="#i-link"/></svg>シラバスを開く
+                </a>
 
                 <section class="sec">
                     <h3><svg class="i" aria-hidden="true"><use href="#i-list"/></svg>課題</h3>
@@ -1180,6 +1187,36 @@ permalink: /
         }
 
         // ==================== 科目詳細モーダル制御 ====================
+        // シラバスへのリンク（科目名 → subject_id）
+        const SYLLABUS_BASE = 'https://syllabus.kosen-k.go.jp/Pages/PublicSyllabus?school_id=07&department_id=20&year=2023&lang=ja&subject_id=';
+        const SYLLABUS_IDS = {
+            '国語Ⅳ': '0092',
+            '総合英語Ⅱ': '0094',
+            '法学憲法': '0096',
+            '人文科学': '0097',
+            'フランス語': '0098',
+            '化学特論': '0120',
+            '第Ⅰ類実験Ⅱ': '0069',
+            '電子回路': '0074',
+            '電気電子計測': '0077',
+            '高周波回路': '0079',
+            '電磁波工学Ⅰ': '0080',
+            'IoT・エッジコンピューティング': '0090',
+            'マルチメディア情報': '0102',
+            'ネットワークプログラミング': '0110',
+            'ネットワーク技術': '0108',
+            'コンピュータシステム応用': '0112',
+            'ICTシステム開発演習': '0116',
+            '応用数学B': '0118',
+            '情報セキュリティ': '0111'
+        };
+        const SYLLABUS_BY_NAME = {};
+        Object.keys(SYLLABUS_IDS).forEach(k => { SYLLABUS_BY_NAME[k.normalize('NFKC')] = SYLLABUS_IDS[k]; });
+        function syllabusUrl(subject) {
+            const id = SYLLABUS_BY_NAME[String(subject).normalize('NFKC')];
+            return id ? SYLLABUS_BASE + id : '';
+        }
+
         function openSubjectModal(dayCode, periodId) {
             const item = timetableData.find(d => d.day === dayCode && d.period === periodId);
             if (!item || item.subject === 'なし') return;
@@ -1191,6 +1228,8 @@ permalink: /
             $('modal-title').textContent = item.subject;
             $('modal-teacher').textContent = item.teacher && item.teacher !== '-' ? item.teacher : '未設定';
             $('modal-room').textContent = item.room && item.room !== '-' ? item.room : '未設定';
+            const syl = syllabusUrl(item.subject), sylEl = $('modal-syllabus');
+            if (syl) { sylEl.href = syl; sylEl.classList.remove('hidden'); } else { sylEl.removeAttribute('href'); sylEl.classList.add('hidden'); }
 
             const dayObj = DAYS.find(d => d.code === dayCode);
             const periodObj = PERIODS.find(p => p.id === periodId);
