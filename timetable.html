@@ -426,20 +426,8 @@ permalink: /
             --bg-size: 32px 16px;
         }
         :root[data-pattern="stars"], .pv[data-p="stars"] {
-            --bg-image:
-                radial-gradient(1px 1px at 20px 30px, var(--pc), transparent),
-                radial-gradient(1.5px 1.5px at 90px 70px, var(--pc), transparent),
-                radial-gradient(1px 1px at 150px 120px, var(--pc), transparent),
-                radial-gradient(1px 1px at 55px 150px, var(--pc), transparent);
-            --bg-size: 180px 180px;
-        }
-        :root[data-pattern="grain"], .pv[data-p="grain"] {
-            --bg-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
-            --bg-size: 160px 160px;
-        }
-        :root[data-pattern="gradient"], .pv[data-p="gradient"] {
-            --bg-image: linear-gradient(160deg, color-mix(in srgb, var(--req) 16%, transparent), color-mix(in srgb, var(--ele) 16%, transparent));
-            --bg-size: auto;
+            --bg-image: var(--star-img, none);
+            --bg-size: 120px 120px;
         }
 
         /* 着せ替えモーダル */
@@ -496,7 +484,7 @@ permalink: /
             { id: 'sakura', name: '桜', bg: '#fdf0f4', surface: '#ffffff', ink: '#3b1f2b', ink2: '#7a4a5e', ink3: '#a8808f', line: '#f1cfdb', req: '#d6336c', ele: '#7c5cbf', oth: '#8a6f7c', pat: 'dots', pc: 'rgba(214,51,108,.16)' },
             { id: 'ocean', name: '海', bg: '#e6f4fa', surface: '#ffffff', ink: '#0b2a3c', ink2: '#3d6178', ink3: '#7596a8', line: '#c4e0ec', req: '#0b7bbf', ele: '#0e9a8a', oth: '#5a7b8c', pat: 'waves', pc: 'rgba(11,123,191,.18)' },
             { id: 'forest', name: '森', bg: '#eaf2e6', surface: '#fbfdf9', ink: '#17301d', ink2: '#46634c', ink3: '#7e9885', line: '#cfe0c9', req: '#2f7d3b', ele: '#a0661b', oth: '#5f7262', pat: 'stripes', pc: 'rgba(47,125,59,.09)' },
-            { id: 'sunset', name: '夕焼け', bg: '#fff1e3', surface: '#fffaf5', ink: '#3a1d12', ink2: '#7b4a38', ink3: '#b08572', line: '#f3d3bd', req: '#e0561f', ele: '#b8325e', oth: '#8c6a5c', pat: 'gradient' },
+            { id: 'sunset', name: '夕焼け', bg: '#fff1e3', surface: '#fffaf5', ink: '#3a1d12', ink2: '#7b4a38', ink3: '#b08572', line: '#f3d3bd', req: '#e0561f', ele: '#b8325e', oth: '#8c6a5c', pat: 'dots', pc: 'rgba(224,86,31,.14)' },
             { id: 'midnight', name: '夜空', dark: true, bg: '#0a1024', surface: '#131b36', ink: '#e8ecff', ink2: '#aab4dd', ink3: '#6f7aa8', line: '#252f58', req: '#8fa8ff', ele: '#5fd6c4', oth: '#8f9bc4', pat: 'stars', pc: 'rgba(255,255,255,.6)' },
             { id: 'note', name: 'ノート', bg: '#f6f0e1', surface: '#fffdf6', ink: '#2b2417', ink2: '#6a5d43', ink3: '#9c8f72', line: '#e0d6bb', req: '#1f4e9c', ele: '#2f7a4d', oth: '#7a705c', pat: 'ruled', pc: 'rgba(31,78,156,.16)' },
             { id: 'blueprint', name: '青図面', dark: true, bg: '#0f3b6b', surface: '#14487f', ink: '#eaf4ff', ink2: '#b8d4f2', ink3: '#84a9d2', line: '#2b66a3', req: '#ffd25e', ele: '#7ee0c3', oth: '#a9c4e6', on: '#0f2b4d', pat: 'grid', pc: 'rgba(255,255,255,.12)' },
@@ -508,9 +496,23 @@ permalink: /
         const PATTERNS = [
             ['auto', 'テーマ標準'], ['none', 'なし'], ['dots', 'ドット'], ['stripes', 'ストライプ'],
             ['grid', '方眼'], ['ruled', 'ノート罫線'], ['checker', '市松'], ['waves', '波'],
-            ['stars', '星'], ['grain', '紙のざらつき'], ['gradient', 'グラデーション']
+            ['stars', '星']
         ];
-        const VARS = ['--bg', '--surface', '--ink', '--ink-2', '--ink-3', '--line', '--req', '--req-tint', '--ele', '--ele-tint',
+        function starImg(color) {
+            const star = (cx, cy, R) => {
+                const pts = [];
+                for (let i = 0; i < 10; i++) {
+                    const a = (-90 + i * 36) * Math.PI / 180, r = i % 2 === 0 ? R : R * 0.42;
+                    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
+                }
+                return `%3Cpolygon points='${pts.join(' ')}'/%3E`;
+            };
+            const fill = String(color).replace('#', '%23');
+            return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120' fill='${fill}' fill-opacity='.4'%3E`
+                + star(28, 28, 10) + star(88, 66, 7) + star(48, 100, 5) + star(108, 18, 4) + '%3C/svg%3E")';
+        }
+        const defaultReq = () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#86a5ff' : '#2447a6';
+        const VARS = ['--star-img', '--bg', '--surface', '--ink', '--ink-2', '--ink-3', '--line', '--req', '--req-tint', '--ele', '--ele-tint',
             '--oth', '--oth-tint', '--on-solid', '--today', '--danger', '--danger-tint', '--warn', '--warn-tint', '--ok-tint', '--pc', 'color-scheme'];
 
         const root = document.documentElement;
@@ -532,6 +534,7 @@ permalink: /
             const s = root.style;
             VARS.forEach(v => s.removeProperty(v));
             const t = THEMES.find(x => x.id === state.theme) || THEMES[0];
+            s.setProperty('--star-img', starImg(t.id === 'default' ? defaultReq() : t.req));
             if (t.id !== 'default') {
                 const x = t.dark ? DARK : LIGHT;
                 const mix = (c, p, base) => `color-mix(in srgb, ${c} ${p}%, ${base})`;
@@ -557,6 +560,10 @@ permalink: /
 
         load();
         apply();
+        if (window.matchMedia) {
+            const mq = window.matchMedia('(prefers-color-scheme: dark)');
+            (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(apply);
+        }
 
         // 印刷は標準配色・模様なしで出す
         window.addEventListener('beforeprint', () => {
@@ -584,6 +591,11 @@ permalink: /
                     <span class="pv" data-p="${t.id === 'default' ? 'none' : (t.pat || 'none')}" style="${style}">${dots}</span>
                     <span>${t.name}</span></button>`;
             }).join('');
+
+            themeGrid.querySelectorAll('.opt').forEach(b => {
+                const t = THEMES.find(x => x.id === b.dataset.themeId);
+                if (t && t.id !== 'default') b.querySelector('.pv').style.setProperty('--star-img', starImg(t.req));
+            });
 
             patGrid.innerHTML = PATTERNS.map(([id, name]) => `
                 <button type="button" class="opt" data-pattern-id="${id}" aria-pressed="false">
