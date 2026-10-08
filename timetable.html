@@ -478,7 +478,7 @@ permalink: /
         .notice-ops { margin-top: 8px; display: flex; gap: 8px; }
         .notice-ops .btn { padding: 4px 12px; font-size: 12px; }
 
-        .due-banner { margin: 8px auto 0; max-width: 1100px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; }
+        .due-banner { flex: none; width: calc(100% - 16px); margin: 8px auto 0; max-width: 1100px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; }
         .due-banner span { flex: 1; min-width: 0; }
         .due-banner .btn { padding: 4px 12px; font-size: 12px; }
         .notice-head-row { display: flex; align-items: center; gap: 10px; }
@@ -487,6 +487,25 @@ permalink: /
         .push-card { margin-bottom: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
         .push-card span { flex: 1; min-width: 0; line-height: 1.5; }
         .push-card .btn { padding: 3px 9px; font-size: 11px; border-radius: 6px; white-space: nowrap; }
+
+        /* 時間割表を画面に固定（上下にスクロールさせない） */
+        html, body { overscroll-behavior: none; }
+        body { height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .bar { flex: none; }
+        main { flex: 1 1 auto; min-height: 0; width: 100%; padding: 6px 6px 8px; overflow-y: auto; overscroll-behavior: none; display: flex; flex-direction: column; }
+        @media (min-width: 640px) { main { padding: 12px 20px 14px; } }
+        .tt { flex: 1 1 auto; grid-template-rows: auto repeat(5, minmax(72px, 1fr)); }
+        .cell { min-height: 0; }
+        .card { overflow: hidden; }
+
+        /* 共有（管理者が追加した課題・予定） */
+        .shared-check { display: flex; align-items: center; gap: 6px; width: 100%; font-size: 12px; font-weight: 700; color: var(--req); }
+        .shared-tag { margin-left: 6px; padding: 1px 6px; font-size: 10px; font-weight: 700; color: var(--on-solid); background: var(--req); border-radius: 99px; vertical-align: 1px; }
+        .ev-form { display: grid; gap: 8px; margin-bottom: 14px; }
+        .ev-form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .ev-form label { display: grid; gap: 2px; font-size: 11px; color: var(--ink-3); }
+        .notice-uid { margin: 0; font-size: 10px; color: var(--ink-3); word-break: break-all; }
+        .event-item .icon-btn { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
 
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
@@ -497,7 +516,9 @@ permalink: /
             }
             .no-print { display: none !important; }
             body { font-size: 10pt; background-image: none; }
-            main { max-width: none; padding: 0; }
+            body { height: auto; overflow: visible; display: block; }
+            main { max-width: none; padding: 0; overflow: visible; display: block; }
+            .tt { grid-template-rows: none; }
             .print-title { display: block; margin-bottom: 8px; font-size: 14pt; font-weight: 900; }
             .cell { min-height: 78px; }
             .card, .dh, .cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -846,6 +867,7 @@ permalink: /
                         <input type="text" id="modal-todo-input" class="field" placeholder="課題を入力">
                         <input type="date" id="modal-todo-date" class="field" aria-label="提出期限">
                         <button id="modal-todo-add-btn" class="btn" type="button">追加</button>
+                        <label id="modal-todo-shared-wrap" class="shared-check hidden"><input type="checkbox" id="modal-todo-shared"> 全員に共有する（管理者）</label>
                     </div>
                     <ul id="modal-todo-list" class="list"></ul>
                 </section>
@@ -1064,6 +1086,21 @@ permalink: /
 
         function saveStoredData(key, data) {
             try {
+                if (key === STORAGE_KEY_TODO) {
+                    // 管理者が共有した課題は端末に保存せず、完了チェックだけ記録する
+                    const local = {};
+                    const done = Object.assign({}, sharedDone);
+                    Object.keys(data).forEach(k => {
+                        (data[k] || []).forEach(t => {
+                            if (t.shared) { if (t.completed) done[t.docId] = 1; else delete done[t.docId]; }
+                            else (local[k] = local[k] || []).push(t);
+                        });
+                    });
+                    sharedDone = done;
+                    localStorage.setItem(SHARED_DONE_KEY, JSON.stringify(done));
+                    localStorage.setItem(key, JSON.stringify(local));
+                    return;
+                }
                 localStorage.setItem(key, JSON.stringify(data));
             } catch (e) {
                 console.error('Storage save error:', e);
@@ -1232,7 +1269,39 @@ permalink: /
             const body = $('calendar-modal-body');
             body.innerHTML = '';
 
-            const list = annualSchedule[tabKey] || [];
+            // 標準の予定 + 管理者が追加した予定をまとめる
+            const list = (annualSchedule[tabKey] || []).map(m => ({ month: m.month, events: m.events.map(e => Object.assign({}, e)) }));
+            sharedEventDocs.forEach(e => {
+                let m = list.find(x => x.month === e.month);
+                if (!m) { m = { month: e.month, events: [] }; list.push(m); }
+                m.events.push({ date: e.date, desc: e.desc, type: e.type, docId: e.docId });
+            });
+            const monthNo = t => { const n = parseInt(t, 10); return isNaN(n) ? 99 : (n - 10 + 12) % 12; };
+            const dayNo = t => { const m = /(\d+)\/(\d+)/.exec(t || ''); return m ? parseInt(m[2], 10) : 99; };
+            list.sort((x, y) => monthNo(x.month) - monthNo(y.month));
+            list.forEach(m => m.events.sort((x, y) => dayNo(x.date) - dayNo(y.date)));
+
+            if (isAdmin) {
+                const form = document.createElement('div');
+                form.className = 'notice-admin ev-form';
+                form.innerHTML = `
+                    <div class="notice-admin-head">管理者モード：年間予定を追加（全員に表示）</div>
+                    <div class="two">
+                        <label>日付<input id="ev-date" type="date" class="field"></label>
+                        <label>終了日（任意）<input id="ev-date2" type="date" class="field"></label>
+                    </div>
+                    <input id="ev-desc" type="text" class="field" placeholder="内容（例：後期中間試験）" maxlength="60">
+                    <select id="ev-type" class="field">
+                        <option value="event">行事</option>
+                        <option value="exam">試験・締切</option>
+                        <option value="holiday">祝日</option>
+                        <option value="off">休業</option>
+                    </select>
+                    <div class="notice-admin-actions"><button class="btn ink" type="button" data-act="ev-add">追加</button></div>
+                    <p class="notice-err" id="ev-err"></p>`;
+                body.appendChild(form);
+            }
+
             const grid = document.createElement('div');
             grid.className = 'calendar-grid';
 
@@ -1249,11 +1318,14 @@ permalink: /
 
                 const eventsHtml = m.events.map(e => {
                     const tagInfo = tagLabels[e.type] || tagLabels.event;
+                    const del = (isAdmin && e.docId)
+                        ? `<button type="button" class="icon-btn" aria-label="予定を削除" data-ev-del="${escapeHtml(e.docId)}">${icon('trash')}</button>` : '';
                     return `
                         <li class="event-item">
                             <span class="event-date">${escapeHtml(e.date)}</span>
                             <span class="event-desc">${escapeHtml(e.desc)}</span>
                             <span class="event-tag ${tagInfo.class}">${tagInfo.text}</span>
+                            ${del}
                         </li>
                     `;
                 }).join('');
@@ -1275,6 +1347,126 @@ permalink: /
 
         function closeCalendarModal() {
             $('calendar-modal').classList.add('hidden');
+        }
+
+        // ==================== みんなに共有（課題・年間予定）====================
+        const SHARED_TODO_CACHE = 'nit_4it_timetable_shared_todos_v1';
+        const SHARED_DONE_KEY = 'nit_4it_timetable_shared_done_v1';
+        const SHARED_EVENT_CACHE = 'nit_4it_timetable_shared_events_v1';
+        let sharedTodoDocs = [];   // { docId, subjectKey, text, dueDate, createdAt }
+        let sharedEventDocs = [];  // { docId, month, date, desc, type }
+        let sharedDone = loadStoredData(SHARED_DONE_KEY);
+        try { sharedTodoDocs = JSON.parse(localStorage.getItem(SHARED_TODO_CACHE) || '[]'); } catch (e) { sharedTodoDocs = []; }
+        try { sharedEventDocs = JSON.parse(localStorage.getItem(SHARED_EVENT_CACHE) || '[]'); } catch (e) { sharedEventDocs = []; }
+
+        function applySharedTodos() {
+            Object.keys(subjectTodos).forEach(k => {
+                subjectTodos[k] = (subjectTodos[k] || []).filter(t => !t.shared);
+            });
+            sharedTodoDocs.forEach(d => {
+                if (!d.subjectKey) return;
+                if (!subjectTodos[d.subjectKey]) subjectTodos[d.subjectKey] = [];
+                subjectTodos[d.subjectKey].push({
+                    text: d.text, dueDate: d.dueDate || '', completed: !!sharedDone[d.docId],
+                    createdAt: d.createdAt || '', shared: true, docId: d.docId
+                });
+            });
+        }
+        applySharedTodos();
+
+        function refreshAfterSharedTodos() {
+            try {
+                renderTimetable();
+                if (!$('subject-modal').classList.contains('hidden') && activeSelectedSubject) {
+                    renderModalTodoList(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`);
+                }
+                if (!$('todo-summary-modal').classList.contains('hidden')) openTodoSummaryModal();
+                checkDueReminders();
+            } catch (e) { console.warn(e); }
+        }
+
+        function sharedErrText(e) {
+            const c = e && e.code ? e.code : '';
+            if (c === 'permission-denied') return '権限がありません。Firestoreのルールに、新しい共有用の設定（sharedTodos / events）と管理者のUIDが入っているか確認してください。';
+            return '保存できませんでした' + (c ? '（' + c + '）' : '');
+        }
+
+        async function postSharedTodo(subjectKey, text, dueDate) {
+            if (!noticeDb || !isAdmin) return;
+            try {
+                await noticeDb.collection('sharedTodos').add({
+                    subjectKey: subjectKey, text: text, dueDate: dueDate || '',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (e) { alert(sharedErrText(e)); }
+        }
+        async function deleteSharedTodo(docId) {
+            if (!noticeDb || !isAdmin) return;
+            if (!confirm('この共有課題を削除しますか？（全員から消えます）')) return;
+            try { await noticeDb.collection('sharedTodos').doc(docId).delete(); }
+            catch (e) { alert(sharedErrText(e)); }
+        }
+
+        function fmtEventDate(d1, d2) {
+            const w = '日月火水木金土';
+            const a = parseDate(d1);
+            const head = (a.getMonth() + 1) + '/' + a.getDate();
+            if (!d2 || d2 <= d1) return head + '(' + w[a.getDay()] + ')';
+            const b = parseDate(d2);
+            if (a.getMonth() === b.getMonth()) return head + '-' + b.getDate();
+            return head + '-' + (b.getMonth() + 1) + '/' + b.getDate();
+        }
+        async function postSharedEvent() {
+            const d1 = $('ev-date').value, d2 = $('ev-date2').value;
+            const desc = $('ev-desc').value.trim();
+            const type = $('ev-type').value;
+            const err = $('ev-err');
+            err.textContent = '';
+            if (!d1) { err.textContent = '日付を選んでください'; return; }
+            if (!desc) { err.textContent = '内容を入力してください'; return; }
+            if (!noticeDb || !isAdmin) { err.textContent = 'ログインしていません'; return; }
+            try {
+                await noticeDb.collection('events').add({
+                    month: (parseDate(d1).getMonth() + 1) + '月', date: fmtEventDate(d1, d2),
+                    sortDate: d1, desc: desc, type: type,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                $('ev-desc').value = ''; $('ev-date').value = ''; $('ev-date2').value = '';
+            } catch (e) { err.textContent = sharedErrText(e); }
+        }
+        async function deleteSharedEvent(docId) {
+            if (!noticeDb || !isAdmin) return;
+            if (!confirm('この予定を削除しますか？（全員から消えます）')) return;
+            try { await noticeDb.collection('events').doc(docId).delete(); }
+            catch (e) { alert(sharedErrText(e)); }
+        }
+        function onCalendarBodyClick(e) {
+            const del = e.target.closest('[data-ev-del]');
+            if (del) { deleteSharedEvent(del.dataset.evDel); return; }
+            if (e.target.closest('[data-act="ev-add"]')) postSharedEvent();
+        }
+
+        function startSharedListeners() {
+            noticeDb.collection('sharedTodos').onSnapshot(snap => {
+                sharedTodoDocs = snap.docs.map(d => {
+                    const v = d.data();
+                    return {
+                        docId: d.id, subjectKey: v.subjectKey || '', text: v.text || '', dueDate: v.dueDate || '',
+                        createdAt: v.createdAt && v.createdAt.toMillis ? new Date(v.createdAt.toMillis()).toISOString() : ''
+                    };
+                });
+                try { localStorage.setItem(SHARED_TODO_CACHE, JSON.stringify(sharedTodoDocs)); } catch (e) { /* 無視 */ }
+                applySharedTodos();
+                refreshAfterSharedTodos();
+            }, err => console.warn('sharedTodos', err));
+            noticeDb.collection('events').onSnapshot(snap => {
+                sharedEventDocs = snap.docs.map(d => {
+                    const v = d.data();
+                    return { docId: d.id, month: v.month || '', date: v.date || '', desc: v.desc || '', type: v.type || 'event' };
+                });
+                try { localStorage.setItem(SHARED_EVENT_CACHE, JSON.stringify(sharedEventDocs)); } catch (e) { /* 無視 */ }
+                if (!$('calendar-modal').classList.contains('hidden')) renderCalendarModal('secondHalf');
+            }, err => console.warn('events', err));
         }
 
         // ==================== お知らせ（Firebase） ====================
@@ -1330,6 +1522,7 @@ permalink: /
                 firebase.initializeApp(FIREBASE_CONFIG);
                 noticeDb = firebase.firestore();
                 noticeAuth = firebase.auth();
+                startSharedListeners();
                 noticeDb.collection('notices').orderBy('createdAt', 'desc').limit(100).onSnapshot(snap => {
                     notices = snap.docs.map(d => {
                         const v = d.data({ serverTimestamps: 'estimate' });
@@ -1345,6 +1538,10 @@ permalink: /
                     if (u) noticeView = 'list';
                     $('notice-admin-btn').textContent = 'ログアウト';
                     $('notice-admin-btn').classList.toggle('hidden', !isAdmin);
+                    $('modal-todo-shared-wrap').classList.toggle('hidden', !isAdmin);
+                    if (!isAdmin) $('modal-todo-shared').checked = false;
+                    if (!$('calendar-modal').classList.contains('hidden')) renderCalendarModal('secondHalf');
+                    if (!$('subject-modal').classList.contains('hidden') && activeSelectedSubject) renderModalTodoList(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`);
                     if (isNoticeOpen()) renderNoticeFrame();
                 });
             } catch (e) { console.warn('firebase init', e); }
@@ -1381,6 +1578,7 @@ permalink: /
                             <button class="btn ghost hidden" type="button" id="nt-cancel" data-act="cancel-edit">編集をやめる</button>
                         </div>
                         <p class="notice-err" id="nt-err"></p>
+                        <p class="notice-uid">ログイン中のUID：${escapeHtml((noticeAuth && noticeAuth.currentUser) ? noticeAuth.currentUser.uid : '')}</p>
                     </div>`;
                 noticeEditing = null;
             }
@@ -1437,7 +1635,12 @@ permalink: /
                 $('nt-date').value = todayStr();
                 stopNoticeEdit();
             } catch (e) {
-                setNoticeErr('投稿できませんでした（権限がないか、通信エラーです）');
+                const c = e && e.code ? e.code : '';
+                if (c === 'permission-denied') {
+                    setNoticeErr('権限がありません（permission-denied）。Firestoreのルールの管理者UIDと、下に表示のUIDが同じか確認し、ルールを「公開」してください。');
+                } else {
+                    setNoticeErr('投稿できませんでした' + (c ? '（' + c + '）' : '：' + ((e && e.message) || '')));
+                }
             } finally {
                 btn.disabled = false;
             }
@@ -1786,11 +1989,11 @@ permalink: /
                 li.innerHTML = `
                     <label>
                         <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodoState('${subjectKey}', ${index})">
-                        <span class="txt${todo.completed ? ' done' : ''}">${escapeHtml(todo.text)}</span>
+                        <span class="txt${todo.completed ? ' done' : ''}">${escapeHtml(todo.text)}${todo.shared ? '<span class="shared-tag">共通</span>' : ''}</span>
                     </label>
                     <div class="end">
                         ${getDueDateBadge(todo.dueDate, todo.completed)}
-                        <button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodo('${subjectKey}', ${index})">${icon('trash')}</button>
+                        ${(todo.shared && !isAdmin) ? '' : `<button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodo('${subjectKey}', ${index})">${icon('trash')}</button>`}
                     </div>
                 `;
                 listEl.appendChild(li);
@@ -1816,6 +2019,8 @@ permalink: /
         }
 
         function deleteTodo(subjectKey, index) {
+            const target = subjectTodos[subjectKey] && subjectTodos[subjectKey][index];
+            if (target && target.shared) { deleteSharedTodo(target.docId); return; }
             if (subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey].splice(index, 1);
                 saveStoredData(STORAGE_KEY_TODO, subjectTodos);
@@ -1825,6 +2030,8 @@ permalink: /
         }
 
         function deleteTodoFromSummary(subjectKey, index) {
+            const target = subjectTodos[subjectKey] && subjectTodos[subjectKey][index];
+            if (target && target.shared) { deleteSharedTodo(target.docId); return; }
             if (subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey].splice(index, 1);
                 saveStoredData(STORAGE_KEY_TODO, subjectTodos);
@@ -1849,6 +2056,14 @@ permalink: /
             const text = input.value.trim();
             const dueDate = dateInput.value;
             if (!text) return;
+
+            const sharedBox = $('modal-todo-shared');
+            if (isAdmin && sharedBox && sharedBox.checked) {
+                postSharedTodo(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`, text, dueDate);
+                input.value = '';
+                dateInput.value = '';
+                return;
+            }
 
             const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
             if (!subjectTodos[subjectKey]) {
@@ -1908,11 +2123,11 @@ permalink: /
                             <li class="row">
                                 <label>
                                     <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodoStateFromSummary('${subjectKey}',${t.origIdx})">
-                                    <span class="txt${t.completed ? ' done' : ''}">${escapeHtml(t.text)}</span>
+                                    <span class="txt${t.completed ? ' done' : ''}">${escapeHtml(t.text)}${t.shared ? '<span class="shared-tag">共通</span>' : ''}</span>
                                 </label>
                                 <div class="end">
                                     ${getDueDateBadge(t.dueDate, t.completed)}
-                                    <button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})">${icon('trash')}</button>
+                                    ${(t.shared && !isAdmin) ? '' : `<button type="button" class="icon-btn" aria-label="課題を削除" onclick="deleteTodoFromSummary('${subjectKey}',${t.origIdx})">${icon('trash')}</button>`}
                                 </div>
                             </li>
                         `).join('')}
@@ -1985,6 +2200,7 @@ permalink: /
             $('notice-modal-body').addEventListener('click', onNoticeBodyClick);
             $('notice-admin-btn').addEventListener('click', onNoticeAdminBtn);
             $('notice-push-btn').addEventListener('click', onPushBtnClick);
+            $('calendar-modal-body').addEventListener('click', onCalendarBodyClick);
             $('notice-modal-title').addEventListener('click', onNoticeTitleTap);
             document.addEventListener('keydown', onSecretKey);
             $('notice-btn').addEventListener('click', openNoticeModal);
