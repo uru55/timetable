@@ -456,6 +456,8 @@ permalink: /
 
 
         /* 隠しゲーム */
+        #notice-modal-body > div:empty { display: none; }
+        #notice-modal-body { gap: 12px; }
         .chg-sec { font-size: 13px; font-weight: 900; color: var(--ink-3); margin: 4px 0 8px; }
         #game-modal { padding: 0; align-items: stretch; }
         .sheet.game { max-width: none; width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
@@ -512,7 +514,7 @@ permalink: /
 
         /* 休講・教室変更・補講 */
         .chg-badge { display: inline-block; margin: 0 0 3px; padding: 0 6px; font-size: 9px; font-weight: 800; line-height: 1.6; color: var(--on-solid); background: var(--danger); border-radius: 99px; white-space: nowrap; }
-        .chg-badge.room { background: var(--warn); }
+        .chg-badge.swap { background: var(--warn); }
         .chg-badge.makeup { background: var(--ele); }
         .topwrap { display: block; min-width: 0; }
         .card.cancelled { opacity: .6; }
@@ -1209,20 +1211,24 @@ permalink: /
                         const dim = categoryFilter !== 'all' && item.category !== categoryFilter;
                         const hasTeacher = item.teacher && item.teacher !== '-';
                         const hasRoom = item.room && item.room !== '-';
-                        const newRoom = (chg.room && chg.room.room) ? chg.room.room : '';
+                        const sw = chg.swap || null;
+                        const newRoom = (sw && sw.room) ? sw.room : '';
                         const roomText = newRoom || (hasRoom ? item.room : '');
-                        const meta = (hasTeacher || roomText) ? `
+                        const showTeacher = hasTeacher && !sw;
+                        const dispSubject = sw ? sw.subject : item.subject;
+                        const swCat = sw ? ((timetableData.find(d => d.subject === sw.subject) || {}).category || 'OTHER') : item.category;
+                        const meta = (showTeacher || roomText) ? `
                             <div class="meta">
-                                ${hasTeacher ? `<span class="tch">${escapeHtml(item.teacher)}</span>` : ''}
+                                ${showTeacher ? `<span class="tch">${escapeHtml(item.teacher)}</span>` : ''}
                                 ${roomText ? `<span class="room${newRoom ? ' chg' : ''}">${escapeHtml(roomText)}</span>` : ''}
                             </div>` : '';
-                        const aria = `${item.subject}、${day.name}${period.name}` + (roomText ? `、${roomText}` : '') + (chg.cancel ? '、休講' : '') + (newRoom ? '、教室変更' : '');
+                        const aria = `${dispSubject}、${day.name}${period.name}` + (roomText ? `、${roomText}` : '') + (chg.cancel ? '、休講' : '') + (sw ? '、授業変更（' + item.subject + 'から）' : '');
 
                         cell.innerHTML = `
-                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}${chg.cancel ? ' cancelled' : ''}"
+                            <button type="button" class="card cat-${swCat}${dim ? ' dim' : ''}${chg.cancel ? ' cancelled' : ''}"
                                     aria-label="${escapeHtml(aria)}"
                                     onclick="openSubjectModal('${item.day}', ${item.period})">
-                                <span class="topwrap">${changeBadge(chg)}<span class="sub">${escapeHtml(item.subject)}</span></span>
+                                <span class="topwrap">${changeBadge(chg)}<span class="sub">${escapeHtml(dispSubject)}</span></span>
                                 ${meta}
                             </button>
                         `;
@@ -1501,9 +1507,9 @@ permalink: /
                 refreshAfterSharedTodos();
             }, err => console.warn('sharedTodos', err));
             noticeDb.collection('changes').onSnapshot(snap => {
-                sharedChanges = snap.docs.map(d => {
+                sharedChanges = snap.docs.filter(d => d.data().type !== 'room').map(d => {
                     const v = d.data();
-                    return { docId: d.id, date: v.date || '', period: Number(v.period) || 0, type: v.type || 'cancel', subject: v.subject || '', room: v.room || '', note: v.note || '' };
+                    return { docId: d.id, date: v.date || '', period: Number(v.period) || 0, type: v.type || 'cancel', subject: v.subject || '', orig: v.orig || '', room: v.room || '', note: v.note || '' };
                 });
                 try { localStorage.setItem(CHANGES_CACHE, JSON.stringify(sharedChanges)); } catch (e) { /* 無視 */ }
                 updateChangesBadge();
@@ -1524,7 +1530,7 @@ permalink: /
         const CHANGES_CACHE = 'nit_4it_timetable_changes_v1';
         let sharedChanges = [];  // { docId, date, period, type, subject, room, note }
         try { sharedChanges = JSON.parse(localStorage.getItem(CHANGES_CACHE) || '[]'); } catch (e) { sharedChanges = []; }
-        const CHG_LABEL = { cancel: '休講', room: '教室変更', makeup: '補講' };
+        const CHG_LABEL = { cancel: '休講', swap: '授業変更', makeup: '補講' };
         const DAY_CODES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         function isoOf(d) {
@@ -1546,7 +1552,7 @@ permalink: /
         }
         function changeBadge(chg) {
             if (chg.cancel) return '<span class="chg-badge">休講</span>';
-            if (chg.room) return '<span class="chg-badge room">教室変更</span>';
+            if (chg.swap) return '<span class="chg-badge swap">授業変更</span>';
             if (chg.makeup) return '<span class="chg-badge makeup">補講あり</span>';
             return '';
         }
@@ -1579,14 +1585,15 @@ permalink: /
             const list = upcomingChanges();
             if (!list.length) { box.innerHTML = isAdmin ? '<p class="notice-empty">これからの休講・教室変更・補講はありません</p>' : ''; return; }
             box.innerHTML = '<h3 class="chg-sec">休講・教室変更・補講</h3><ul class="notice-list">' + list.map(c => {
-                const cls = c.type === 'cancel' ? 'chg-badge' : c.type === 'room' ? 'chg-badge room' : 'chg-badge makeup';
+                const cls = c.type === 'cancel' ? 'chg-badge' : c.type === 'swap' ? 'chg-badge swap' : 'chg-badge makeup';
                 const detail = [];
-                if (c.type === 'room' && c.room) detail.push('新しい教室：' + c.room);
+                if (c.type === 'swap') detail.push((c.orig ? c.orig + ' → ' : '変更後：') + c.subject);
+                if (c.type === 'swap' && c.room) detail.push('教室：' + c.room);
                 if (c.type === 'makeup' && c.room) detail.push('教室：' + c.room);
                 if (c.note) detail.push(c.note);
                 return `<li class="notice-item${c.type === 'cancel' ? ' new' : ''}">
                     <div class="notice-meta"><span class="${cls}" style="margin:0">${CHG_LABEL[c.type] || ''}</span><span>${escapeHtml(chgDateLabel(c.date))} ${c.period}限</span></div>
-                    <div class="notice-title">${escapeHtml(c.subject)}</div>
+                    <div class="notice-title">${escapeHtml(c.type === 'swap' && c.orig ? c.orig : c.subject)}</div>
                     ${detail.length ? `<div class="notice-text">${escapeHtml(detail.join('\n'))}</div>` : ''}
                     ${isAdmin ? `<div class="chg-ops"><button class="btn warn" type="button" data-chg-del="${escapeHtml(c.docId)}">削除</button></div>` : ''}
                 </li>`;
@@ -1603,7 +1610,7 @@ permalink: /
                     <label>時限<select id="chg-period" class="field">${PERIODS.map(p => `<option value="${p.id}">${p.id}限</option>`).join('')}</select></label>
                 </div>
                 <select id="chg-type" class="field">
-                    <option value="cancel">休講</option><option value="room">教室変更</option><option value="makeup">補講</option>
+                    <option value="cancel">休講</option><option value="swap">授業変更</option><option value="makeup">補講</option>
                 </select>
                 <p class="notice-uid" id="chg-hint"></p>
                 <input id="chg-subject" type="text" class="field hidden" placeholder="補講の科目名" maxlength="40">
@@ -1623,9 +1630,10 @@ permalink: /
         }
         function updateChgForm() {
             const type = $('chg-type').value;
-            $('chg-subject').classList.toggle('hidden', type !== 'makeup');
+            $('chg-subject').classList.toggle('hidden', type === 'cancel');
+            $('chg-subject').placeholder = type === 'swap' ? '変更後の科目名' : '補講の科目名';
             $('chg-room').classList.toggle('hidden', type === 'cancel');
-            $('chg-room').placeholder = type === 'room' ? '新しい教室（例：8-206）' : '補講の教室（例：8-206）';
+            $('chg-room').placeholder = type === 'swap' ? '教室（変わる場合のみ・例：8-206）' : '補講の教室（例：8-206）';
             const hint = $('chg-hint');
             if (type === 'makeup') { hint.textContent = '補講は、時間割の空いているコマに表示されます。'; return; }
             if (!$('chg-date').value) { hint.textContent = '日付を選ぶと、対象の授業が表示されます。'; return; }
@@ -1638,20 +1646,25 @@ permalink: /
             const date = $('chg-date').value, period = +$('chg-period').value, type = $('chg-type').value;
             const room = $('chg-room').value.trim(), note = $('chg-note').value.trim();
             if (!date) { err.textContent = '日付を選んでください'; return; }
-            let subject = '';
-            if (type === 'makeup') {
+            let subject = '', orig = '';
+            if (type === 'swap') {
+                const it = chgTargetItem();
+                if (!it) { err.textContent = 'その曜日・時限には授業がありません'; return; }
+                orig = it.subject;
+                subject = $('chg-subject').value.trim();
+                if (!subject) { err.textContent = '変更後の科目名を入力してください'; return; }
+            } else if (type === 'makeup') {
                 subject = $('chg-subject').value.trim();
                 if (!subject) { err.textContent = '補講の科目名を入力してください'; return; }
             } else {
                 const it = chgTargetItem();
                 if (!it) { err.textContent = 'その曜日・時限には授業がありません'; return; }
                 subject = it.subject;
-                if (type === 'room' && !room) { err.textContent = '新しい教室を入力してください'; return; }
             }
             if (!noticeDb || !isAdmin) { err.textContent = 'ログインしていません'; return; }
             try {
                 await noticeDb.collection('changes').add({
-                    date: date, period: period, type: type, subject: subject, room: room, note: note,
+                    date: date, period: period, type: type, subject: subject, orig: orig, room: room, note: note,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 $('chg-room').value = ''; $('chg-note').value = ''; $('chg-subject').value = '';
@@ -1928,6 +1941,8 @@ permalink: /
             renderChangesForm();
             renderChangesList();
             renderNoticeList();
+            const sec = $('notice-sec');
+            if (sec) sec.classList.toggle('hidden', !isAdmin && !upcomingChanges().length);
         }
 
         function renderNoticeList() {
