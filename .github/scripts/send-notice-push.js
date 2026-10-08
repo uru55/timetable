@@ -33,6 +33,21 @@ function todoMessage(v) {
 function eventMessage(v) {
   return { title: '年間予定が追加されました', body: `${v.date || ''} ${v.desc || ''}`.trim().slice(0, 120) };
 }
+function changeMessage(v) {
+  const label = { cancel: '休講', room: '教室変更', makeup: '補講' }[v.type] || '変更';
+  let date = '';
+  if (v.date) {
+    const [, m, d] = v.date.split('-').map(Number);
+    const w = '日月火水木金土'[new Date(v.date + 'T00:00:00Z').getUTCDay()];
+    date = `${m}/${d}(${w})`;
+  }
+  const per = v.period ? `${v.period}限` : '';
+  const sub = v.subject || '';
+  let tail = label;
+  if (v.type === 'room' && v.room) tail += ` → ${v.room}`;
+  if (v.type === 'makeup' && v.room) tail = `補講（教室 ${v.room}）`;
+  return { title: `${label}のお知らせ`, body: `${date}${per} ${sub} ${tail}`.replace(/\s+/g, ' ').trim().slice(0, 120) };
+}
 function todayJST(now = Date.now()) {
   return new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
@@ -100,7 +115,8 @@ async function runNew(db) {
   const jobs = [
     ['notices', noticeMessage, 'notice-'],
     ['sharedTodos', todoMessage, 'todo-'],
-    ['events', eventMessage, 'event-'],
+    ['events', eventMessage, changeMessage, 'event-'],
+    ['changes', changeMessage, 'change-'],
   ];
   const found = [];
   for (const [col, build, prefix] of jobs) {
@@ -155,7 +171,7 @@ async function main() {
   else await runNew(db);
 }
 
-module.exports = { noticeMessage, todoMessage, eventMessage, dailyMessage, todayJST, daysBetween };
+module.exports = { noticeMessage, todoMessage, eventMessage, changeMessage, dailyMessage, todayJST, daysBetween };
 
 if (require.main === module) {
   main().catch((e) => {
