@@ -1,0 +1,21 @@
+name: Daily due reminder
+
+on:
+  schedule:
+    - cron: '0 22 * * *'   # 毎朝7:00（日本時間）。GitHubの混雑で数十分遅れることがあります
+  workflow_dispatch:         # 手動でも実行できる（動作テスト用）
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install firebase-admin
+        run: npm install firebase-admin --no-save
+      - name: Send due reminder
+        run: node .github/scripts/send-notice-push.js daily
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
