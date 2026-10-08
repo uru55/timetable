@@ -57,7 +57,7 @@ function daysBetween(fromIso, toIso) {
 function dueWord(diff) {
   return diff === 0 ? '今日' : diff === 1 ? '明日' : `あと${diff}日`;
 }
-function dailyMessage(todos, today) {
+function dailyMessage(todos, today, label = '共有課題') {
   const items = todos
     .filter((t) => t.dueDate)
     .map((t) => ({ ...t, diff: daysBetween(today, t.dueDate) }))
@@ -66,7 +66,7 @@ function dailyMessage(todos, today) {
   if (items.length === 0) return null;
   const lines = items.slice(0, 3).map((t) => `${subjectLabel(t)}「${t.text}」${dueWord(t.diff)}`);
   const more = items.length > 3 ? ` ほか${items.length - 3}件` : '';
-  return { title: `共有課題の期限が近づいています（${items.length}件）`, body: (lines.join(' / ') + more).slice(0, 180) };
+  return { title: `${label}の期限が近づいています（${items.length}件）`, body: (lines.join(' / ') + more).slice(0, 180) };
 }
 
 // ---------- 送信 ----------
@@ -152,6 +152,26 @@ async function runDaily(db) {
   await cleanup(db, invalid);
 }
 
+// 個人の課題：端末ごとに預かった課題（pushTokens の mine）から、その端末だけに通知する
+function personalMessage(mine, today) {
+  const todos = (Array.isArray(mine) ? mine : []).map((m) => ({ subject: m.s, text: m.t, dueDate: m.d }));
+  return dailyMessage(todos, today, 'あなたの課題');
+}
+async function runPersonal(db) {
+  const today = todayJST();
+  const snap = await db.collection('pushTokens').get();
+  const invalid = new Set();
+  let sent = 0;
+  for (const d of snap.docs) {
+    const msg = personalMessage(d.get('mine'), today);
+    if (!msg) continue;
+    await sendToAll([d.id], msg, 'mine-' + today, invalid);
+    sent++;
+  }
+  console.log(`${today}：個人の課題の通知 ${sent} 台`);
+  await cleanup(db, invalid);
+}
+
 async function main() {
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) {
@@ -167,11 +187,11 @@ async function main() {
   }
   initializeApp({ credential: cert(account) });
   const db = getFirestore();
-  if (process.argv[2] === 'daily') await runDaily(db);
+  if (process.argv[2] === 'daily') { await runDaily(db); await runPersonal(db); }
   else await runNew(db);
 }
 
-module.exports = { noticeMessage, todoMessage, eventMessage, changeMessage, dailyMessage, todayJST, daysBetween };
+module.exports = { noticeMessage, todoMessage, eventMessage, changeMessage, personalMessage, dailyMessage, todayJST, daysBetween };
 
 if (require.main === module) {
   main().catch((e) => {
