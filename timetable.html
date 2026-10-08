@@ -458,6 +458,14 @@ permalink: /
         /* 隠しゲーム */
         #notice-modal-body > div:empty { display: none; }
         #notice-modal-body { gap: 12px; }
+        .week-nav { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 0 6px; font-size: 13px; font-weight: 800; color: var(--ink-2, var(--ink)); }
+        .week-nav button { border: 1px solid var(--line, rgba(128,128,128,.35)); background: var(--surface); color: var(--ink); border-radius: 99px; min-width: 34px; height: 28px; font: inherit; font-size: 16px; line-height: 1; cursor: pointer; }
+        .week-nav button:disabled { opacity: .3; cursor: default; }
+        .week-nav .wk-today { font-size: 12px; padding: 0 12px; }
+        @keyframes wkL { from { transform: translateX(36px); opacity: .3; } }
+        @keyframes wkR { from { transform: translateX(-36px); opacity: .3; } }
+        .tt.slide-l { animation: wkL .22s ease-out; }
+        .tt.slide-r { animation: wkR .22s ease-out; }
         .chg-sec { font-size: 13px; font-weight: 900; color: var(--ink-3); margin: 4px 0 8px; }
         #game-modal { padding: 0; align-items: stretch; }
         .sheet.game { max-width: none; width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
@@ -812,6 +820,12 @@ permalink: /
     <main>
         <p class="print-title">IT4 令和8年度 後期 時間割</p>
 
+        <div id="week-nav" class="week-nav hidden no-print">
+            <button type="button" id="week-prev" aria-label="前の週">‹</button>
+            <span id="week-label"></span>
+            <button type="button" id="week-today" class="wk-today">今週へ</button>
+            <button type="button" id="week-next" aria-label="次の週">›</button>
+        </div>
         <div id="timetable-grid" class="tt">
             <div></div>
             <div class="dh" data-day-code="Mon"><span class="dc">月</span><span class="dd"></span></div>
@@ -1094,13 +1108,31 @@ permalink: /
             { day: 'Thu', period: 4, subject: 'IoT・エッジコンピューティング', teacher: '千葉、力武', room: '8-401', category: 'ELECTIVE' },
             { day: 'Thu', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
 
-            // 金曜日 (10/9 月曜振替・国語Ⅳは4限目へ移動)
-            { day: 'Fri', period: 1, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
-            { day: 'Fri', period: 2, subject: '応用数学Ｂ', teacher: '長谷部', room: '2-102', category: 'REQUIRED' },
-            { day: 'Fri', period: 3, subject: '人文科学', teacher: '朱', room: '2-102', category: 'ELECTIVE' },
-            { day: 'Fri', period: 4, subject: '国語Ⅳ', teacher: '犬飼', room: '2-102', category: 'ELECTIVE' },
+            // 金曜日（通常）
+            { day: 'Fri', period: 1, subject: '化学特論', teacher: '小松', room: '2-102', category: 'ELECTIVE' },
+            { day: 'Fri', period: 2, subject: '第Ⅰ類実験Ⅱ', teacher: '-', room: '-', category: 'REQUIRED' },
+            { day: 'Fri', period: 3, subject: '電気電子計測', teacher: '林(忠)', room: '2-102', category: 'REQUIRED' },
+            { day: 'Fri', period: 4, subject: 'ネットワークプログラミング', teacher: '小林(秀)', room: '8-401', category: 'ELECTIVE' },
             { day: 'Fri', period: 5, subject: 'なし', teacher: '-', room: '-', category: 'OTHER' },
         ];
+
+        // 特定の日だけ時間割が違う日（日付 → 曜日 → コマ → 授業）
+        const DATE_OVERRIDES = {
+            '2026-10-09': {  // 月曜振替の金曜日
+                Fri: {
+                    1: { subject: '国語Ⅳ', teacher: '犬飼', room: '2-102', category: 'ELECTIVE' },
+                    2: { subject: '応用数学Ｂ', teacher: '長谷部', room: '2-102', category: 'REQUIRED' },
+                    3: { subject: '人文科学', teacher: '朱', room: '2-102', category: 'ELECTIVE' },
+                    4: { subject: 'なし', teacher: '-', room: '-', category: 'OTHER' }
+                }
+            }
+        };
+        // その日（表示中の週の dayCode）に実際にある授業を返す
+        function scheduleItem(dayCode, periodId, iso) {
+            const base = timetableData.find(d => d.day === dayCode && d.period === periodId);
+            const ov = iso && DATE_OVERRIDES[iso] && DATE_OVERRIDES[iso][dayCode] && DATE_OVERRIDES[iso][dayCode][periodId];
+            return ov ? Object.assign({}, base || { day: dayCode, period: periodId }, ov) : base;
+        }
 
         // アプリケーション状態管理
         let activeSelectedSubject = null;
@@ -1193,7 +1225,7 @@ permalink: /
                 body.appendChild(label);
 
                 DAYS.forEach(day => {
-                    const item = timetableData.find(d => d.day === day.code && d.period === period.id);
+                    const item = scheduleItem(day.code, period.id, displayDateISO(day.code));
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.day = day.code;
@@ -1243,6 +1275,66 @@ permalink: /
             updateTodoBadgeCount();
         }
 
+        // 表示できる週：2026/10/5（月）の週 〜 2027/2/17 を含む週（その後は春休み）
+        const WEEK_FIRST = '2026-10-05', WEEK_LAST_MONDAY = '2027-02-15';
+        function baseMonday() {
+            const now = getNow(), dow = now.getDay();
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)));
+            return d;
+        }
+        function weekBounds() {
+            const base = baseMonday();
+            const wk = (iso) => Math.round((parseDate(iso) - base) / (7 * 86400000));
+            return { min: wk(WEEK_FIRST), max: wk(WEEK_LAST_MONDAY) };
+        }
+        function changeWeek(delta, absolute) {
+            const bd = weekBounds();
+            const next = Math.max(bd.min, Math.min(bd.max, absolute ? 0 : weekOffset + delta));
+            if (next === weekOffset) return;
+            const dir = next > weekOffset ? 'slide-l' : 'slide-r';
+            weekOffset = next;
+            renderTimetable();
+            const g = $('timetable-grid');
+            g.classList.remove('slide-l', 'slide-r'); void g.offsetWidth; g.classList.add(dir);
+            updateWeekNav();
+        }
+        function updateWeekNav() {
+            const nav = $('week-nav');
+            const bd = weekBounds();
+            nav.classList.toggle('hidden', weekOffset === 0);
+            $('week-prev').disabled = weekOffset <= bd.min;
+            $('week-next').disabled = weekOffset >= bd.max;
+            if (weekOffset === 0) return;
+            const a = parseDate(displayDateISO('Mon')), b = parseDate(displayDateISO('Fri'));
+            const rel = weekOffset > 0 ? `${weekOffset}週後` : `${-weekOffset}週前`;
+            $('week-label').textContent = `${a.getMonth() + 1}/${a.getDate()} 〜 ${b.getMonth() + 1}/${b.getDate()}（${rel}）`;
+        }
+        function setupWeekSwipe() {
+            const area = document.querySelector('main');
+            let sx = 0, sy = 0, st = 0, tracking = false;
+            area.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) { tracking = false; return; }
+                sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); tracking = true;
+            }, { passive: true });
+            area.addEventListener('touchend', (e) => {
+                if (!tracking) return;
+                tracking = false;
+                const t = e.changedTouches[0];
+                const dx = t.clientX - sx, dy = t.clientY - sy;
+                if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6 || Date.now() - st > 800) return;
+                changeWeek(dx < 0 ? 1 : -1);
+            }, { passive: true });
+            $('week-prev').addEventListener('click', () => changeWeek(-1));
+            $('week-next').addEventListener('click', () => changeWeek(1));
+            $('week-today').addEventListener('click', () => changeWeek(0, true));
+            document.addEventListener('keydown', (e) => {
+                if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+                if (document.querySelector('.overlay:not(.hidden)')) return;
+                if (e.key === 'ArrowLeft') changeWeek(-1);
+                else if (e.key === 'ArrowRight') changeWeek(1);
+            });
+        }
         function updateCurrentTimeHighlight() {
             const now = getNow();
 
@@ -1250,12 +1342,12 @@ permalink: /
             const dayOfWeek = now.getDay();
             const dayCodes = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
-            const currentDayCode = isWeekday ? dayCodes[dayOfWeek] : null;
+            const currentDayCode = (isWeekday && weekOffset === 0) ? dayCodes[dayOfWeek] : null;
 
             // 曜日ヘッダーの日付 (土日は翌週の日付を表示)
             const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const offset = dayOfWeek === 0 ? 1 : dayOfWeek === 6 ? 2 : -(dayOfWeek - 1);
-            monday.setDate(monday.getDate() + offset);
+            monday.setDate(monday.getDate() + offset + weekOffset * 7);
             DAYS.forEach((d, i) => {
                 const dt = new Date(monday);
                 dt.setDate(monday.getDate() + i);
@@ -1276,7 +1368,7 @@ permalink: /
 
             const banner = $('current-subject-banner');
 
-            if (!isHighlightEnabled || !isWeekday) {
+            if (!isHighlightEnabled || !isWeekday || weekOffset !== 0) {
                 banner.classList.add('hidden');
                 return;
             }
@@ -1298,7 +1390,7 @@ permalink: /
             }
 
             const activeCell = document.querySelector(`.cell[data-day="${currentDayCode}"][data-period="${activePeriod}"]`);
-            const activeData = timetableData.find(d => d.day === currentDayCode && d.period === activePeriod);
+            const activeData = scheduleItem(currentDayCode, activePeriod, displayDateISO(currentDayCode));
 
             if (activeData && activeData.subject !== 'なし') {
                 const card = activeCell && activeCell.querySelector('.card');
@@ -1539,11 +1631,12 @@ permalink: /
             return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
         }
         // 時間割表に表示している週の、各曜日の日付（土日は翌週）
+        let weekOffset = 0;  // 0=今週（土日は来週）、+1=次の週、-1=前の週
         function displayDateISO(dayCode) {
             const now = getNow();
             const dow = now.getDay();
             const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)) + DAYS.findIndex(x => x.code === dayCode));
+            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)) + weekOffset * 7 + DAYS.findIndex(x => x.code === dayCode));
             return isoOf(d);
         }
         function changesFor(dateISO, periodId) {
@@ -1627,7 +1720,8 @@ permalink: /
             const date = $('chg-date').value;
             if (!date) return null;
             const code = DAY_CODES[parseDate(date).getDay()];
-            return timetableData.find(d => d.day === code && d.period === +$('chg-period').value && d.subject !== 'なし') || null;
+            const it = scheduleItem(code, +$('chg-period').value, date);
+            return (it && it.subject !== 'なし') ? it : null;
         }
         function updateChgForm() {
             const type = $('chg-type').value;
@@ -2292,7 +2386,7 @@ permalink: /
         }
 
         function openSubjectModal(dayCode, periodId) {
-            const item = timetableData.find(d => d.day === dayCode && d.period === periodId);
+            const item = scheduleItem(dayCode, periodId, displayDateISO(dayCode));
             if (!item || item.subject === 'なし') return;
 
             activeSelectedSubject = { day: dayCode, period: periodId, ...item };
@@ -2586,6 +2680,7 @@ permalink: /
             $('notice-push-btn').addEventListener('click', onPushBtnClick);
             $('calendar-modal-body').addEventListener('click', onCalendarBodyClick);
             $('notice-modal-body').addEventListener('click', onChangesClick);
+            setupWeekSwipe();
             $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '' }; showRanking(); } });
             $('rank-panel').addEventListener('click', onRankClick);
             window.addEventListener('message', (e) => {
