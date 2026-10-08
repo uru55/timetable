@@ -34,7 +34,7 @@ function eventMessage(v) {
   return { title: '年間予定が追加されました', body: `${v.date || ''} ${v.desc || ''}`.trim().slice(0, 120) };
 }
 function changeMessage(v) {
-  const label = { cancel: '休講', room: '教室変更', makeup: '補講' }[v.type] || '変更';
+  const label = { cancel: '休講', swap: '授業変更', makeup: '補講' }[v.type] || '変更';
   let date = '';
   if (v.date) {
     const [, m, d] = v.date.split('-').map(Number);
@@ -42,9 +42,9 @@ function changeMessage(v) {
     date = `${m}/${d}(${w})`;
   }
   const per = v.period ? `${v.period}限` : '';
-  const sub = v.subject || '';
+  const sub = v.type === 'swap' ? (v.orig || '') : (v.subject || '');
   let tail = label;
-  if (v.type === 'room' && v.room) tail += ` → ${v.room}`;
+  if (v.type === 'swap') tail = `授業変更 → ${v.subject || ''}${v.room ? '（教室 ' + v.room + '）' : ''}`;
   if (v.type === 'makeup' && v.room) tail = `補講（教室 ${v.room}）`;
   return { title: `${label}のお知らせ`, body: `${date}${per} ${sub} ${tail}`.replace(/\s+/g, ' ').trim().slice(0, 120) };
 }
