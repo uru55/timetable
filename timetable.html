@@ -456,9 +456,12 @@ permalink: /
 
 
         /* 隠しゲーム */
-        .sheet.game { max-width: 600px; }
+        .chg-sec { font-size: 13px; font-weight: 900; color: var(--ink-3); margin: 4px 0 8px; }
+        #game-modal { padding: 0; align-items: stretch; }
+        .sheet.game { max-width: none; width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
+        .sheet.game #game-body { flex: 1; min-height: 0; overflow: hidden; }
         .sheet.game .sheet-body { padding: 0; gap: 0; }
-        #game-frame { display: block; width: 100%; height: min(78dvh, 820px); border: 0; background: var(--surface); }
+        #game-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--surface); }
 
         /* ==================== 印刷 ==================== */
         /* お知らせ */
@@ -506,6 +509,32 @@ permalink: /
         .ev-form label { display: grid; gap: 2px; font-size: 11px; color: var(--ink-3); }
         .notice-uid { margin: 0; font-size: 10px; color: var(--ink-3); word-break: break-all; }
         .event-item .icon-btn { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
+
+        /* 休講・教室変更・補講 */
+        .chg-badge { display: inline-block; margin: 0 0 3px; padding: 0 6px; font-size: 9px; font-weight: 800; line-height: 1.6; color: var(--on-solid); background: var(--danger); border-radius: 99px; white-space: nowrap; }
+        .chg-badge.room { background: var(--warn); }
+        .chg-badge.makeup { background: var(--ele); }
+        .topwrap { display: block; min-width: 0; }
+        .card.cancelled { opacity: .6; }
+        .card.cancelled .sub { text-decoration: line-through; }
+        .room.chg { background: var(--warn-tint); color: var(--warn); }
+        .chg-ops { margin-top: 8px; display: flex; gap: 8px; }
+        .chg-ops .btn { padding: 4px 12px; font-size: 12px; }
+
+        /* マインスイーパー週間ランキング */
+        .sheet.game .rank-panel { padding: 14px 18px; gap: 10px; align-content: start; flex: 1; min-height: 0; overflow-y: auto; }
+        .rank-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+        .rank-tab { padding: 4px 12px; font-size: 12px; font-weight: 700; color: var(--ink-2); background: transparent; border: 1px solid var(--line); border-radius: 99px; cursor: pointer; }
+        .rank-tab.on { color: var(--on-solid); background: var(--req); border-color: var(--req); }
+        .rank-week { margin: 0; font-size: 11px; color: var(--ink-3); }
+        .rank-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+        .rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 14px; background: var(--bg); border-radius: 10px; }
+        .rank-row.me { outline: 2px solid var(--req); }
+        .rank-no { width: 28px; flex: none; font-weight: 900; text-align: center; font-variant-numeric: tabular-nums; }
+        .rank-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+        .rank-time { flex: none; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .rank-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--ink-3); }
+        .rank-foot .btn { padding: 3px 9px; font-size: 11px; border-radius: 6px; }
 
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
@@ -717,6 +746,7 @@ permalink: /
         <symbol id="i-link" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
         <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.5-1.9-.3-1 .4-2.1 1.5-2.1H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><path d="M7.5 11.5v.01M10 7.5v.01M14.5 7.5v.01M17 11.5v.01"/></symbol>
         <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol>
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
     </svg>
 
@@ -827,7 +857,7 @@ permalink: /
         </div>
     </div>
 
-    <!-- 科目詳細 -->
+<!-- 科目詳細 -->
     <div id="subject-modal" class="overlay hidden no-print" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="sheet">
             <div id="modal-header-bg" class="sheet-head cat-REQUIRED">
@@ -905,9 +935,13 @@ permalink: /
         <div class="sheet game">
             <div class="sheet-head plain">
                 <button id="game-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
-                <h2 id="game-modal-title">マインスイーパー</h2>
+                <div class="notice-head-row">
+                    <h2 id="game-modal-title">マインスイーパー</h2>
+                    <button id="game-rank-btn" class="notice-push-btn" type="button">🏆 週間ランキング</button>
+                </div>
             </div>
             <div class="sheet-body" id="game-body"></div>
+            <div class="sheet-body rank-panel hidden" id="rank-panel"></div>
         </div>
     </div>
 
@@ -1161,27 +1195,34 @@ permalink: /
                     cell.className = 'cell';
                     cell.dataset.day = day.code;
                     cell.dataset.period = period.id;
+                    const chg = changesFor(displayDateISO(day.code), period.id);
 
                     if (!item || item.subject === 'なし') {
-                        cell.classList.add('empty');
-                        cell.setAttribute('aria-label', '空きコマ');
+                        if (chg.makeup) {
+                            cell.innerHTML = makeupCardHtml(chg.makeup);
+                        } else {
+                            cell.classList.add('empty');
+                            cell.setAttribute('aria-label', '空きコマ');
+                        }
                     } else {
                         const subjectKey = `${item.day}_${item.period}`;
                         const dim = categoryFilter !== 'all' && item.category !== categoryFilter;
                         const hasTeacher = item.teacher && item.teacher !== '-';
                         const hasRoom = item.room && item.room !== '-';
-                        const meta = (hasTeacher || hasRoom) ? `
+                        const newRoom = (chg.room && chg.room.room) ? chg.room.room : '';
+                        const roomText = newRoom || (hasRoom ? item.room : '');
+                        const meta = (hasTeacher || roomText) ? `
                             <div class="meta">
                                 ${hasTeacher ? `<span class="tch">${escapeHtml(item.teacher)}</span>` : ''}
-                                ${hasRoom ? `<span class="room">${escapeHtml(item.room)}</span>` : ''}
+                                ${roomText ? `<span class="room${newRoom ? ' chg' : ''}">${escapeHtml(roomText)}</span>` : ''}
                             </div>` : '';
-                        const aria = `${item.subject}、${day.name}${period.name}` + (hasRoom ? `、${item.room}` : '');
+                        const aria = `${item.subject}、${day.name}${period.name}` + (roomText ? `、${roomText}` : '') + (chg.cancel ? '、休講' : '') + (newRoom ? '、教室変更' : '');
 
                         cell.innerHTML = `
-                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}"
+                            <button type="button" class="card cat-${item.category}${dim ? ' dim' : ''}${chg.cancel ? ' cancelled' : ''}"
                                     aria-label="${escapeHtml(aria)}"
                                     onclick="openSubjectModal('${item.day}', ${item.period})">
-                                <span class="sub">${escapeHtml(item.subject)}</span>
+                                <span class="topwrap">${changeBadge(chg)}<span class="sub">${escapeHtml(item.subject)}</span></span>
                                 ${meta}
                             </button>
                         `;
@@ -1459,6 +1500,16 @@ permalink: /
                 applySharedTodos();
                 refreshAfterSharedTodos();
             }, err => console.warn('sharedTodos', err));
+            noticeDb.collection('changes').onSnapshot(snap => {
+                sharedChanges = snap.docs.map(d => {
+                    const v = d.data();
+                    return { docId: d.id, date: v.date || '', period: Number(v.period) || 0, type: v.type || 'cancel', subject: v.subject || '', room: v.room || '', note: v.note || '' };
+                });
+                try { localStorage.setItem(CHANGES_CACHE, JSON.stringify(sharedChanges)); } catch (e) { /* 無視 */ }
+                updateChangesBadge();
+                renderTimetable();
+                
+            }, err => console.warn('changes', err));
             noticeDb.collection('events').onSnapshot(snap => {
                 sharedEventDocs = snap.docs.map(d => {
                     const v = d.data();
@@ -1467,6 +1518,295 @@ permalink: /
                 try { localStorage.setItem(SHARED_EVENT_CACHE, JSON.stringify(sharedEventDocs)); } catch (e) { /* 無視 */ }
                 if (!$('calendar-modal').classList.contains('hidden')) renderCalendarModal('secondHalf');
             }, err => console.warn('events', err));
+        }
+
+        // ==================== 休講・教室変更・補講（みんなに共有）====================
+        const CHANGES_CACHE = 'nit_4it_timetable_changes_v1';
+        let sharedChanges = [];  // { docId, date, period, type, subject, room, note }
+        try { sharedChanges = JSON.parse(localStorage.getItem(CHANGES_CACHE) || '[]'); } catch (e) { sharedChanges = []; }
+        const CHG_LABEL = { cancel: '休講', room: '教室変更', makeup: '補講' };
+        const DAY_CODES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        function isoOf(d) {
+            const z = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+        }
+        // 時間割表に表示している週の、各曜日の日付（土日は翌週）
+        function displayDateISO(dayCode) {
+            const now = getNow();
+            const dow = now.getDay();
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)) + DAYS.findIndex(x => x.code === dayCode));
+            return isoOf(d);
+        }
+        function changesFor(dateISO, periodId) {
+            const r = {};
+            sharedChanges.forEach(c => { if (c.date === dateISO && c.period === periodId && !r[c.type]) r[c.type] = c; });
+            return r;
+        }
+        function changeBadge(chg) {
+            if (chg.cancel) return '<span class="chg-badge">休講</span>';
+            if (chg.room) return '<span class="chg-badge room">教室変更</span>';
+            if (chg.makeup) return '<span class="chg-badge makeup">補講あり</span>';
+            return '';
+        }
+        function makeupCardHtml(c) {
+            const room = c.room ? `<div class="meta"><span class="room chg">${escapeHtml(c.room)}</span></div>` : '';
+            return `<button type="button" class="card cat-OTHER" aria-label="補講 ${escapeHtml(c.subject)}" onclick="openChangesModal()">
+                <span class="topwrap"><span class="chg-badge makeup">補講</span><span class="sub">${escapeHtml(c.subject)}</span></span>${room}</button>`;
+        }
+        function chgDateLabel(iso) {
+            const d = parseDate(iso);
+            return (d.getMonth() + 1) + '/' + d.getDate() + '(' + '日月火水木金土'[d.getDay()] + ')';
+        }
+        function upcomingChanges() {
+            const today = isoOf(new Date());
+            return sharedChanges.filter(c => c.date >= today)
+                .sort((a, b) => a.date.localeCompare(b.date) || a.period - b.period);
+        }
+        function updateChangesBadge() {
+            const n = upcomingChanges().length;
+            const b = $('changes-badge');
+            if (!b) return;
+            b.textContent = n > 9 ? '9+' : String(n);
+            b.classList.toggle('hidden', n === 0);
+        }
+        function isChangesOpen() { return isNoticeOpen(); }
+
+        function renderChangesList() {
+            const box = $('chg-list-area');
+            if (!box) return;
+            const list = upcomingChanges();
+            if (!list.length) { box.innerHTML = isAdmin ? '<p class="notice-empty">これからの休講・教室変更・補講はありません</p>' : ''; return; }
+            box.innerHTML = '<h3 class="chg-sec">休講・教室変更・補講</h3><ul class="notice-list">' + list.map(c => {
+                const cls = c.type === 'cancel' ? 'chg-badge' : c.type === 'room' ? 'chg-badge room' : 'chg-badge makeup';
+                const detail = [];
+                if (c.type === 'room' && c.room) detail.push('新しい教室：' + c.room);
+                if (c.type === 'makeup' && c.room) detail.push('教室：' + c.room);
+                if (c.note) detail.push(c.note);
+                return `<li class="notice-item${c.type === 'cancel' ? ' new' : ''}">
+                    <div class="notice-meta"><span class="${cls}" style="margin:0">${CHG_LABEL[c.type] || ''}</span><span>${escapeHtml(chgDateLabel(c.date))} ${c.period}限</span></div>
+                    <div class="notice-title">${escapeHtml(c.subject)}</div>
+                    ${detail.length ? `<div class="notice-text">${escapeHtml(detail.join('\n'))}</div>` : ''}
+                    ${isAdmin ? `<div class="chg-ops"><button class="btn warn" type="button" data-chg-del="${escapeHtml(c.docId)}">削除</button></div>` : ''}
+                </li>`;
+            }).join('') + '</ul>';
+        }
+        function renderChangesForm() {
+            const box = $('chg-form-area');
+            if (!box) return;
+            if (!isAdmin) { box.innerHTML = ''; return; }
+            box.innerHTML = `<div class="notice-admin ev-form">
+                <div class="notice-admin-head">管理者モード：休講・教室変更・補講を登録（全員に表示・通知）</div>
+                <div class="two">
+                    <label>日付<input id="chg-date" type="date" class="field"></label>
+                    <label>時限<select id="chg-period" class="field">${PERIODS.map(p => `<option value="${p.id}">${p.id}限</option>`).join('')}</select></label>
+                </div>
+                <select id="chg-type" class="field">
+                    <option value="cancel">休講</option><option value="room">教室変更</option><option value="makeup">補講</option>
+                </select>
+                <p class="notice-uid" id="chg-hint"></p>
+                <input id="chg-subject" type="text" class="field hidden" placeholder="補講の科目名" maxlength="40">
+                <input id="chg-room" type="text" class="field hidden" placeholder="教室（例：8-206）" maxlength="20">
+                <input id="chg-note" type="text" class="field" placeholder="メモ（任意）" maxlength="60">
+                <div class="notice-admin-actions"><button class="btn ink" type="button" data-act="chg-add">登録</button></div>
+                <p class="notice-err" id="chg-err"></p>
+            </div>`;
+            ['chg-date', 'chg-period', 'chg-type'].forEach(id => $(id).addEventListener('change', updateChgForm));
+            updateChgForm();
+        }
+        function chgTargetItem() {
+            const date = $('chg-date').value;
+            if (!date) return null;
+            const code = DAY_CODES[parseDate(date).getDay()];
+            return timetableData.find(d => d.day === code && d.period === +$('chg-period').value && d.subject !== 'なし') || null;
+        }
+        function updateChgForm() {
+            const type = $('chg-type').value;
+            $('chg-subject').classList.toggle('hidden', type !== 'makeup');
+            $('chg-room').classList.toggle('hidden', type === 'cancel');
+            $('chg-room').placeholder = type === 'room' ? '新しい教室（例：8-206）' : '補講の教室（例：8-206）';
+            const hint = $('chg-hint');
+            if (type === 'makeup') { hint.textContent = '補講は、時間割の空いているコマに表示されます。'; return; }
+            if (!$('chg-date').value) { hint.textContent = '日付を選ぶと、対象の授業が表示されます。'; return; }
+            const it = chgTargetItem();
+            hint.textContent = it ? '対象の授業：' + it.subject + (it.room && it.room !== '-' ? '（' + it.room + '）' : '') : 'その曜日・時限には授業がありません。';
+        }
+        async function postChange() {
+            const err = $('chg-err');
+            err.textContent = '';
+            const date = $('chg-date').value, period = +$('chg-period').value, type = $('chg-type').value;
+            const room = $('chg-room').value.trim(), note = $('chg-note').value.trim();
+            if (!date) { err.textContent = '日付を選んでください'; return; }
+            let subject = '';
+            if (type === 'makeup') {
+                subject = $('chg-subject').value.trim();
+                if (!subject) { err.textContent = '補講の科目名を入力してください'; return; }
+            } else {
+                const it = chgTargetItem();
+                if (!it) { err.textContent = 'その曜日・時限には授業がありません'; return; }
+                subject = it.subject;
+                if (type === 'room' && !room) { err.textContent = '新しい教室を入力してください'; return; }
+            }
+            if (!noticeDb || !isAdmin) { err.textContent = 'ログインしていません'; return; }
+            try {
+                await noticeDb.collection('changes').add({
+                    date: date, period: period, type: type, subject: subject, room: room, note: note,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                $('chg-room').value = ''; $('chg-note').value = ''; $('chg-subject').value = '';
+            } catch (e) { err.textContent = sharedErrText(e); }
+        }
+        async function deleteChange(docId) {
+            if (!noticeDb || !isAdmin) return;
+            if (!confirm('この変更情報を削除しますか？（全員から消えます）')) return;
+            try { await noticeDb.collection('changes').doc(docId).delete(); }
+            catch (e) { alert(sharedErrText(e)); }
+        }
+        function openChangesModal() { openNoticeModal(); }
+        function onChangesClick(e) {
+            const del = e.target.closest('[data-chg-del]');
+            if (del) { deleteChange(del.dataset.chgDel); return; }
+            if (e.target.closest('[data-act="chg-add"]')) postChange();
+        }
+
+        // ==================== マインスイーパー 週間ランキング ====================
+        const MS_NAME_KEY = 'ms-nickname';
+        const MS_DEV_KEY = 'ms-device-id';
+        const MS_LEVELS = ['初級', '中級', '上級'];
+        let rankState = { offset: 0, level: 0, note: '' };
+        let rankDocs = [];
+
+        function msDevice() {
+            try {
+                let d = localStorage.getItem(MS_DEV_KEY);
+                if (!d) {
+                    d = Array.from(crypto.getRandomValues(new Uint8Array(12))).map(b => b.toString(16).padStart(2, '0')).join('');
+                    localStorage.setItem(MS_DEV_KEY, d);
+                }
+                return d;
+            } catch (e) { return 'anon' + Math.random().toString(36).slice(2, 12); }
+        }
+        function msName() { try { return localStorage.getItem(MS_NAME_KEY) || ''; } catch (e) { return ''; } }
+        function msSetName(n) { try { localStorage.setItem(MS_NAME_KEY, n); } catch (e) { /* 無視 */ } }
+        function msAskName(current) {
+            const v = prompt('週間ランキングに載せるニックネームを入力してください（12文字まで）', current || '');
+            const n = (v || '').trim().slice(0, 12);
+            if (n) msSetName(n);
+            return n;
+        }
+        function msWeekMonday(offset) {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + offset * 7);
+            return d;
+        }
+        function msWeekKey(offset) { return isoOf(msWeekMonday(offset || 0)); }
+        function msWeekLabel(offset) {
+            const a = msWeekMonday(offset), b = new Date(a);
+            b.setDate(a.getDate() + 6);
+            return (a.getMonth() + 1) + '/' + a.getDate() + ' 〜 ' + (b.getMonth() + 1) + '/' + b.getDate();
+        }
+        function isRankOpen() { return !$('rank-panel').classList.contains('hidden'); }
+
+        async function loadRankDocs() {
+            if (!noticeDb) { rankDocs = []; return false; }
+            try {
+                const snap = await noticeDb.collection('scores').where('week', '==', msWeekKey(rankState.offset)).limit(500).get();
+                rankDocs = snap.docs.map(d => {
+                    const v = d.data();
+                    return { docId: d.id, name: v.name || '', time: Number(v.time), level: Number(v.level), device: v.device || '' };
+                });
+                return true;
+            } catch (e) { rankDocs = []; return false; }
+        }
+        async function renderRanking() {
+            const panel = $('rank-panel');
+            panel.innerHTML = '<p class="notice-empty">読み込み中…</p>';
+            const ok = await loadRankDocs();
+            const me = msDevice();
+            const best = new Map();
+            rankDocs.filter(d => d.level === rankState.level).forEach(d => {
+                const cur = best.get(d.device);
+                if (!cur || d.time < cur.time) best.set(d.device, d);
+            });
+            const rows = [...best.values()].sort((a, b) => a.time - b.time).slice(0, 10);
+            const medal = ['🥇', '🥈', '🥉'];
+            const list = ok
+                ? (rows.length ? '<ol class="rank-list">' + rows.map((r, i) => `
+                    <li class="rank-row${r.device === me ? ' me' : ''}">
+                        <span class="rank-no">${medal[i] || (i + 1)}</span>
+                        <span class="rank-name">${escapeHtml(r.name)}</span>
+                        <span class="rank-time">${r.time}秒</span>
+                        ${isAdmin ? `<button type="button" class="icon-btn" aria-label="記録を削除" data-rank-del="${escapeHtml(r.device)}">${icon('trash')}</button>` : ''}
+                    </li>`).join('') + '</ol>' : '<p class="notice-empty">まだ記録がありません。クリアして一番乗りを目指そう！</p>')
+                : '<p class="notice-empty">ランキングを読み込めませんでした（通信を確認してください）</p>';
+            panel.innerHTML = `
+                <div class="rank-tabs">
+                    <button type="button" class="rank-tab${rankState.offset === 0 ? ' on' : ''}" data-rank-week="0">今週</button>
+                    <button type="button" class="rank-tab${rankState.offset === -1 ? ' on' : ''}" data-rank-week="-1">先週</button>
+                </div>
+                <div class="rank-tabs">
+                    ${MS_LEVELS.map((n, i) => `<button type="button" class="rank-tab${rankState.level === i ? ' on' : ''}" data-rank-level="${i}">${n}</button>`).join('')}
+                </div>
+                <p class="rank-week">${msWeekLabel(rankState.offset)}（月曜〜日曜・毎週リセット）</p>
+                ${rankState.note ? `<p class="rank-week" style="color:var(--req);font-weight:700">${escapeHtml(rankState.note)}</p>` : ''}
+                ${list}
+                <div class="rank-foot">
+                    <span>ニックネーム：${escapeHtml(msName() || '未設定')}</span>
+                    <button type="button" class="btn ghost" data-rank-name="1">変更</button>
+                </div>`;
+        }
+        function showRanking() {
+            $('game-body').classList.add('hidden');
+            $('rank-panel').classList.remove('hidden');
+            $('game-rank-btn').textContent = '← ゲームに戻る';
+            renderRanking();
+        }
+        function hideRanking() {
+            $('rank-panel').classList.add('hidden');
+            $('game-body').classList.remove('hidden');
+            $('game-rank-btn').textContent = '🏆 週間ランキング';
+        }
+        async function handleMsWin(level, time) {
+            if (!Number.isInteger(time) || time < 1 || time > 3600 || ![0, 1, 2].includes(level)) return;
+            if (!noticeDb) return;
+            const wk = msWeekKey(0);
+            const localKey = 'ms-wk-' + wk + '-' + level;
+            let prev = 0;
+            try { prev = Number(localStorage.getItem(localKey)) || 0; } catch (e) { /* 無視 */ }
+            if (prev && time >= prev) return; // 今週の自己ベストを更新したときだけ登録
+            let name = msName();
+            if (!name) name = msAskName('');
+            if (!name) return;
+            try {
+                await noticeDb.collection('scores').add({
+                    name: name, time: time, level: level, week: wk, device: msDevice(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                try { localStorage.setItem(localKey, String(time)); } catch (e) { /* 無視 */ }
+                rankState = { offset: 0, level: level, note: '🎉 ' + time + '秒でランキングに登録しました！' };
+            } catch (e) {
+                rankState = { offset: 0, level: level, note: '登録できませんでした' + (e && e.code ? '（' + e.code + '）' : '') };
+            }
+            showRanking();
+        }
+        async function deleteRankDevice(device) {
+            if (!noticeDb || !isAdmin) return;
+            if (!confirm('この人の、この週・この難易度の記録をすべて削除しますか？')) return;
+            const targets = rankDocs.filter(d => d.device === device && d.level === rankState.level);
+            try { await Promise.all(targets.map(d => noticeDb.collection('scores').doc(d.docId).delete())); }
+            catch (e) { alert(sharedErrText(e)); }
+            renderRanking();
+        }
+        function onRankClick(e) {
+            const t = e.target.closest('[data-rank-week],[data-rank-level],[data-rank-name],[data-rank-del]');
+            if (!t) return;
+            rankState.note = '';
+            if (t.dataset.rankWeek !== undefined) { rankState.offset = Number(t.dataset.rankWeek); renderRanking(); }
+            else if (t.dataset.rankLevel !== undefined) { rankState.level = Number(t.dataset.rankLevel); renderRanking(); }
+            else if (t.dataset.rankName !== undefined) { msAskName(msName()); renderRanking(); }
+            else if (t.dataset.rankDel !== undefined) deleteRankDevice(t.dataset.rankDel);
         }
 
         // ==================== お知らせ（Firebase） ====================
@@ -1540,6 +1880,8 @@ permalink: /
                     $('notice-admin-btn').classList.toggle('hidden', !isAdmin);
                     $('modal-todo-shared-wrap').classList.toggle('hidden', !isAdmin);
                     if (!isAdmin) $('modal-todo-shared').checked = false;
+                    
+                    if (isRankOpen()) renderRanking();
                     if (!$('calendar-modal').classList.contains('hidden')) renderCalendarModal('secondHalf');
                     if (!$('subject-modal').classList.contains('hidden') && activeSelectedSubject) renderModalTodoList(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`);
                     if (isNoticeOpen()) renderNoticeFrame();
@@ -1549,7 +1891,7 @@ permalink: /
 
         function renderNoticeFrame() {
             const body = $('notice-modal-body');
-            body.innerHTML = '<div id="notice-admin-area"></div><div id="notice-list-area"></div>';
+            body.innerHTML = '<div id="notice-admin-area"></div><div id="chg-form-area"></div><div id="chg-list-area"></div><h3 class="chg-sec" id="notice-sec">お知らせ</h3><div id="notice-list-area"></div>';
             const area = $('notice-admin-area');
             if (noticeView === 'login' && !isAdmin) {
                 area.innerHTML = `
@@ -1583,6 +1925,8 @@ permalink: /
                 noticeEditing = null;
             }
             renderPushCard();
+            renderChangesForm();
+            renderChangesList();
             renderNoticeList();
         }
 
@@ -2201,6 +2545,15 @@ permalink: /
             $('notice-admin-btn').addEventListener('click', onNoticeAdminBtn);
             $('notice-push-btn').addEventListener('click', onPushBtnClick);
             $('calendar-modal-body').addEventListener('click', onCalendarBodyClick);
+            $('notice-modal-body').addEventListener('click', onChangesClick);
+            $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '' }; showRanking(); } });
+            $('rank-panel').addEventListener('click', onRankClick);
+            window.addEventListener('message', (e) => {
+                const f = document.getElementById('game-frame');
+                if (!f || e.source !== f.contentWindow) return;
+                const d = e.data;
+                if (d && d.type === 'ms-win') handleMsWin(Number(d.level), Number(d.time));
+            });
             $('notice-modal-title').addEventListener('click', onNoticeTitleTap);
             document.addEventListener('keydown', onSecretKey);
             $('notice-btn').addEventListener('click', openNoticeModal);
@@ -2377,6 +2730,7 @@ function checkWin(){
   let t='🎉 クリア！ '+s+'秒';
   if(!b||s<b){setBest(lv,s);$('best').textContent=s+'秒';t+='（ベスト更新）'}
   $('msg').textContent=t;
+  try{parent.postMessage({type:'ms-win',level:+lv,time:s},'*')}catch(e){}
 }
 // input
 let pt=null,lp=false;
@@ -2433,6 +2787,7 @@ init();
     function closeGame() {
         modal.classList.add('hidden');
         body.innerHTML = ''; // 閉じたらゲームを破棄（タイマーも止まる）
+        try { hideRanking(); } catch (e) { /* 無視 */ }
     }
 
     toggle.addEventListener('change', () => {
