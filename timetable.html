@@ -1391,11 +1391,11 @@ permalink: /
             return '保存できませんでした' + (c ? '（' + c + '）' : '');
         }
 
-        async function postSharedTodo(subjectKey, text, dueDate) {
+        async function postSharedTodo(subjectKey, text, dueDate, subjectName) {
             if (!noticeDb || !isAdmin) return;
             try {
                 await noticeDb.collection('sharedTodos').add({
-                    subjectKey: subjectKey, text: text, dueDate: dueDate || '',
+                    subjectKey: subjectKey, subject: subjectName || '', text: text, dueDate: dueDate || '',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (e) { alert(sharedErrText(e)); }
@@ -2059,7 +2059,7 @@ permalink: /
 
             const sharedBox = $('modal-todo-shared');
             if (isAdmin && sharedBox && sharedBox.checked) {
-                postSharedTodo(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`, text, dueDate);
+                postSharedTodo(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`, text, dueDate, activeSelectedSubject.subject);
                 input.value = '';
                 dateInput.value = '';
                 return;
