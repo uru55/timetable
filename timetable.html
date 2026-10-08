@@ -1135,6 +1135,7 @@ permalink: /
                     sharedDone = done;
                     localStorage.setItem(SHARED_DONE_KEY, JSON.stringify(done));
                     localStorage.setItem(key, JSON.stringify(local));
+                    try { syncPersonalReminders(); } catch (e) { /* 無視 */ }
                     return;
                 }
                 localStorage.setItem(key, JSON.stringify(data));
@@ -2062,10 +2063,34 @@ permalink: /
             if (!token) return false;
             await noticeDb.collection('pushTokens').doc(token).set({
                 token: token,
+                mine: buildPersonalReminders(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             try { localStorage.setItem(PUSH_REFRESH_KEY, String(Date.now())); } catch (e) { /* 無視 */ }
             return true;
+        }
+        // 個人の課題（期限つき・未完了）を、毎朝の通知用にサーバーへ預ける（この端末宛の通知にだけ使われる）
+        function buildPersonalReminders() {
+            const out = [];
+            Object.keys(subjectTodos).forEach(k => {
+                const [day, per] = k.split('_');
+                const it = timetableData.find(d => d.day === day && String(d.period) === per);
+                (subjectTodos[k] || []).forEach(t => {
+                    if (t.shared || t.completed || !t.dueDate) return;
+                    out.push({ s: it ? it.subject : '', t: String(t.text || '').slice(0, 30), d: t.dueDate });
+                });
+            });
+            return out.sort((a, b) => a.d.localeCompare(b.d)).slice(0, 30);
+        }
+        let personalSyncTimer = null;
+        function syncPersonalReminders() {
+            clearTimeout(personalSyncTimer);
+            personalSyncTimer = setTimeout(async () => {
+                try {
+                    if (!pushSupported() || !noticeDb || Notification.permission !== 'granted') return;
+                    await registerPushToken();
+                } catch (e) { /* 無視 */ }
+            }, 4000);
         }
         function refreshPushTokenIfNeeded() {
             if (!pushSupported() || Notification.permission !== 'granted') return;
@@ -2547,7 +2572,7 @@ permalink: /
             // お知らせイベント
             updateNoticeBadge();
             initNoticeBackend();
-            refreshPushTokenIfNeeded();
+            refreshPushTokenIfNeeded(); setTimeout(syncPersonalReminders, 6000);
             $('due-banner-open').addEventListener('click', openTodoSummaryModal);
             $('due-banner-close').addEventListener('click', () => {
                 $('due-banner').dataset.closed = '1';
