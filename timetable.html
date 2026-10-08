@@ -466,6 +466,27 @@ permalink: /
         @keyframes wkR { from { transform: translateX(-36px); opacity: .3; } }
         .tt.slide-l { animation: wkL .22s ease-out; }
         .tt.slide-r { animation: wkR .22s ease-out; }
+        /* ===== チャンピオン演出 ===== */
+        body.champ .dh { background: linear-gradient(135deg, #fbe28a, #e0a800); }
+        body.champ .dh .dc, body.champ .dh .dd { color: #3b2a00; background: transparent; }
+        body.champ .dh[data-day-code="Mon"] { position: relative; }
+        body.champ .dh[data-day-code="Mon"]::after { content: '👑'; position: absolute; top: -9px; right: -2px; font-size: 14px; transform: rotate(14deg); }
+        body.champ .cell .card { background: linear-gradient(160deg, #fff3c4, #f3cf5c); border-color: #d9a400; box-shadow: 0 0 0 1px #d9a400, 0 2px 10px rgba(224, 168, 0, .45); color: #3b2a00; }
+        body.champ .cell .card .room, body.champ .cell .card .tch { color: #5a4100; }
+        .champ-ov { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: rgba(10, 15, 25, .72); overflow: hidden; cursor: pointer; }
+        .champ-box { position: relative; text-align: center; padding: 28px 30px 22px; border-radius: 22px; background: linear-gradient(160deg, #fff6d0, #f0c53d); color: #3b2a00; box-shadow: 0 0 60px rgba(255, 210, 60, .65); animation: champPop .55s cubic-bezier(.2, 1.4, .4, 1); max-width: 86vw; }
+        .champ-box .crown { font-size: 56px; line-height: 1; animation: champBob 1.4s ease-in-out infinite; }
+        .champ-box h2 { margin: 8px 0 4px; font-size: 28px; word-break: keep-all; overflow-wrap: anywhere; font-weight: 900; letter-spacing: .04em; }
+        .champ-box .lv { font-size: 15px; font-weight: 800; margin: 2px 0; }
+        .champ-box .hint { margin-top: 12px; font-size: 11px; opacity: .7; }
+        .champ-box.big { padding: 34px 36px 26px; box-shadow: 0 0 90px rgba(255, 170, 30, .9); }
+        .champ-box.big .crown { font-size: 76px; }
+        .champ-box.big h2 { font-size: 30px; }
+        .confetti { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: confFall linear forwards; }
+        @keyframes confFall { to { transform: translateY(110vh) rotate(720deg); } }
+        @keyframes champPop { from { transform: scale(.3); opacity: 0; } }
+        @keyframes champBob { 50% { transform: translateY(-6px) rotate(-6deg); } }
+        @media (prefers-reduced-motion: reduce) { .confetti { display: none; } .champ-box, .champ-box .crown { animation: none; } }
         .chg-sec { font-size: 13px; font-weight: 900; color: var(--ink-3); margin: 4px 0 8px; }
         #game-modal { padding: 0; align-items: stretch; }
         .sheet.game { max-width: none; width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
@@ -520,7 +541,7 @@ permalink: /
         .notice-uid { margin: 0; font-size: 10px; color: var(--ink-3); word-break: break-all; }
         .event-item .icon-btn { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
 
-        /* 休講・教室変更・補講 */
+        /* 休講・授業変更・補講 */
         .chg-badge { display: inline-block; margin: 0 0 3px; padding: 0 6px; font-size: 9px; font-weight: 800; line-height: 1.6; color: var(--on-solid); background: var(--danger); border-radius: 99px; white-space: nowrap; }
         .chg-badge.swap { background: var(--warn); }
         .chg-badge.makeup { background: var(--ele); }
@@ -1127,6 +1148,29 @@ permalink: /
                 }
             }
         };
+        // 授業名から、その授業の担当・教室・区分を調べる（授業変更で使う）
+        function subjectInfo(name) {
+            return timetableData.find(d => d.subject === name && d.subject !== 'なし')
+                || Object.values(DATE_OVERRIDES).map(o => Object.values(o).map(day => Object.values(day)).flat()).flat().find(x => x.subject === name)
+                || null;
+        }
+        function allSubjectNames() {
+            const set = new Set(timetableData.filter(d => d.subject !== 'なし').map(d => d.subject));
+            Object.values(DATE_OVERRIDES).forEach(o => Object.values(o).forEach(day => Object.values(day).forEach(x => { if (x.subject !== 'なし') set.add(x.subject); })));
+            return [...set].sort((a, b) => a.localeCompare(b, 'ja'));
+        }
+        // 授業変更も反映した、その日その時限の授業（空きコマに授業を足す変更にも対応）
+        function effectiveItem(dayCode, periodId, iso) {
+            const base = scheduleItem(dayCode, periodId, iso);
+            const sw = changesFor(iso, periodId).swap;
+            if (!sw) return base;
+            const info = subjectInfo(sw.subject) || {};
+            return {
+                day: dayCode, period: periodId, subject: sw.subject,
+                teacher: info.teacher || '-', room: info.room || '-', category: info.category || 'OTHER',
+                swapped: true, orig: (base && base.subject !== 'なし') ? base.subject : ''
+            };
+        }
         // その日（表示中の週の dayCode）に実際にある授業を返す
         function scheduleItem(dayCode, periodId, iso) {
             const base = timetableData.find(d => d.day === dayCode && d.period === periodId);
@@ -1225,7 +1269,7 @@ permalink: /
                 body.appendChild(label);
 
                 DAYS.forEach(day => {
-                    const item = scheduleItem(day.code, period.id, displayDateISO(day.code));
+                    const item = effectiveItem(day.code, period.id, displayDateISO(day.code));
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.day = day.code;
@@ -1244,18 +1288,16 @@ permalink: /
                         const dim = categoryFilter !== 'all' && item.category !== categoryFilter;
                         const hasTeacher = item.teacher && item.teacher !== '-';
                         const hasRoom = item.room && item.room !== '-';
-                        const sw = chg.swap || null;
-                        const newRoom = (sw && sw.room) ? sw.room : '';
-                        const roomText = newRoom || (hasRoom ? item.room : '');
-                        const showTeacher = hasTeacher && !sw;
-                        const dispSubject = sw ? sw.subject : item.subject;
-                        const swCat = sw ? ((timetableData.find(d => d.subject === sw.subject) || {}).category || 'OTHER') : item.category;
+                        const roomText = hasRoom ? item.room : '';
+                        const showTeacher = hasTeacher;
+                        const dispSubject = item.subject;
+                        const swCat = item.category;
                         const meta = (showTeacher || roomText) ? `
                             <div class="meta">
                                 ${showTeacher ? `<span class="tch">${escapeHtml(item.teacher)}</span>` : ''}
-                                ${roomText ? `<span class="room${newRoom ? ' chg' : ''}">${escapeHtml(roomText)}</span>` : ''}
+                                ${roomText ? `<span class="room">${escapeHtml(roomText)}</span>` : ''}
                             </div>` : '';
-                        const aria = `${dispSubject}、${day.name}${period.name}` + (roomText ? `、${roomText}` : '') + (chg.cancel ? '、休講' : '') + (sw ? '、授業変更（' + item.subject + 'から）' : '');
+                        const aria = `${dispSubject}、${day.name}${period.name}` + (roomText ? `、${roomText}` : '') + (chg.cancel ? '、休講' : '') + (item.swapped ? '、授業変更' + (item.orig ? '（' + item.orig + 'から）' : '') : '');
 
                         cell.innerHTML = `
                             <button type="button" class="card cat-${swCat}${dim ? ' dim' : ''}${chg.cancel ? ' cancelled' : ''}"
@@ -1390,7 +1432,7 @@ permalink: /
             }
 
             const activeCell = document.querySelector(`.cell[data-day="${currentDayCode}"][data-period="${activePeriod}"]`);
-            const activeData = scheduleItem(currentDayCode, activePeriod, displayDateISO(currentDayCode));
+            const activeData = effectiveItem(currentDayCode, activePeriod, displayDateISO(currentDayCode));
 
             if (activeData && activeData.subject !== 'なし') {
                 const card = activeCell && activeCell.querySelector('.card');
@@ -1619,7 +1661,7 @@ permalink: /
             }, err => console.warn('events', err));
         }
 
-        // ==================== 休講・教室変更・補講（みんなに共有）====================
+        // ==================== 休講・授業変更・補講（みんなに共有）====================
         const CHANGES_CACHE = 'nit_4it_timetable_changes_v1';
         let sharedChanges = [];  // { docId, date, period, type, subject, room, note }
         try { sharedChanges = JSON.parse(localStorage.getItem(CHANGES_CACHE) || '[]'); } catch (e) { sharedChanges = []; }
@@ -1677,17 +1719,21 @@ permalink: /
             const box = $('chg-list-area');
             if (!box) return;
             const list = upcomingChanges();
-            if (!list.length) { box.innerHTML = isAdmin ? '<p class="notice-empty">これからの休講・教室変更・補講はありません</p>' : ''; return; }
-            box.innerHTML = '<h3 class="chg-sec">休講・教室変更・補講</h3><ul class="notice-list">' + list.map(c => {
+            if (!list.length) { box.innerHTML = isAdmin ? '<p class="notice-empty">これからの休講・授業変更・補講はありません</p>' : ''; return; }
+            box.innerHTML = '<h3 class="chg-sec">休講・授業変更・補講</h3><ul class="notice-list">' + list.map(c => {
                 const cls = c.type === 'cancel' ? 'chg-badge' : c.type === 'swap' ? 'chg-badge swap' : 'chg-badge makeup';
                 const detail = [];
-                if (c.type === 'swap') detail.push((c.orig ? c.orig + ' → ' : '変更後：') + c.subject);
-                if (c.type === 'swap' && c.room) detail.push('教室：' + c.room);
+                if (c.type === 'swap') {
+                    const inf = subjectInfo(c.subject) || {};
+                    detail.push((c.orig ? c.orig : '空きコマ') + ' → ' + c.subject);
+                    const ex = [inf.teacher, inf.room].filter(x => x && x !== '-').join('・');
+                    if (ex) detail.push(ex);
+                }
                 if (c.type === 'makeup' && c.room) detail.push('教室：' + c.room);
                 if (c.note) detail.push(c.note);
                 return `<li class="notice-item${c.type === 'cancel' ? ' new' : ''}">
                     <div class="notice-meta"><span class="${cls}" style="margin:0">${CHG_LABEL[c.type] || ''}</span><span>${escapeHtml(chgDateLabel(c.date))} ${c.period}限</span></div>
-                    <div class="notice-title">${escapeHtml(c.type === 'swap' && c.orig ? c.orig : c.subject)}</div>
+                    <div class="notice-title">${escapeHtml(c.type === 'swap' ? c.subject : c.subject)}</div>
                     ${detail.length ? `<div class="notice-text">${escapeHtml(detail.join('\n'))}</div>` : ''}
                     ${isAdmin ? `<div class="chg-ops"><button class="btn warn" type="button" data-chg-del="${escapeHtml(c.docId)}">削除</button></div>` : ''}
                 </li>`;
@@ -1698,7 +1744,7 @@ permalink: /
             if (!box) return;
             if (!isAdmin) { box.innerHTML = ''; return; }
             box.innerHTML = `<div class="notice-admin ev-form">
-                <div class="notice-admin-head">管理者モード：休講・教室変更・補講を登録（全員に表示・通知）</div>
+                <div class="notice-admin-head">管理者モード：休講・授業変更・補講を登録（全員に表示・通知）</div>
                 <div class="two">
                     <label>日付<input id="chg-date" type="date" class="field"></label>
                     <label>時限<select id="chg-period" class="field">${PERIODS.map(p => `<option value="${p.id}">${p.id}限</option>`).join('')}</select></label>
@@ -1707,13 +1753,14 @@ permalink: /
                     <option value="cancel">休講</option><option value="swap">授業変更</option><option value="makeup">補講</option>
                 </select>
                 <p class="notice-uid" id="chg-hint"></p>
+                <select id="chg-subject-sel" class="field hidden">${allSubjectNames().map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}</select>
                 <input id="chg-subject" type="text" class="field hidden" placeholder="補講の科目名" maxlength="40">
                 <input id="chg-room" type="text" class="field hidden" placeholder="教室（例：8-206）" maxlength="20">
                 <input id="chg-note" type="text" class="field" placeholder="メモ（任意）" maxlength="60">
                 <div class="notice-admin-actions"><button class="btn ink" type="button" data-act="chg-add">登録</button></div>
                 <p class="notice-err" id="chg-err"></p>
             </div>`;
-            ['chg-date', 'chg-period', 'chg-type'].forEach(id => $(id).addEventListener('change', updateChgForm));
+            ['chg-date', 'chg-period', 'chg-type', 'chg-subject-sel'].forEach(id => $(id).addEventListener('change', updateChgForm));
             updateChgForm();
         }
         function chgTargetItem() {
@@ -1725,14 +1772,21 @@ permalink: /
         }
         function updateChgForm() {
             const type = $('chg-type').value;
-            $('chg-subject').classList.toggle('hidden', type === 'cancel');
-            $('chg-subject').placeholder = type === 'swap' ? '変更後の科目名' : '補講の科目名';
-            $('chg-room').classList.toggle('hidden', type === 'cancel');
-            $('chg-room').placeholder = type === 'swap' ? '教室（変わる場合のみ・例：8-206）' : '補講の教室（例：8-206）';
+            $('chg-subject-sel').classList.toggle('hidden', type !== 'swap');
+            $('chg-subject').classList.toggle('hidden', type !== 'makeup');
+            $('chg-room').classList.toggle('hidden', type !== 'makeup');
+            $('chg-room').placeholder = '補講の教室（例：8-206）';
             const hint = $('chg-hint');
             if (type === 'makeup') { hint.textContent = '補講は、時間割の空いているコマに表示されます。'; return; }
             if (!$('chg-date').value) { hint.textContent = '日付を選ぶと、対象の授業が表示されます。'; return; }
             const it = chgTargetItem();
+            if (type === 'swap') {
+                const sel = subjectInfo($('chg-subject-sel').value) || {};
+                const room = sel.room && sel.room !== '-' ? '・' + sel.room : '';
+                const tch = sel.teacher && sel.teacher !== '-' ? '・' + sel.teacher : '';
+                hint.textContent = (it ? '変更前：' + it.subject : '変更前：空きコマ') + '　変更後の担当・教室は授業に合わせて自動で表示されます' + (tch || room ? '（' + (tch + room).slice(1) + '）' : '');
+                return;
+            }
             hint.textContent = it ? '対象の授業：' + it.subject + (it.room && it.room !== '-' ? '（' + it.room + '）' : '') : 'その曜日・時限には授業がありません。';
         }
         async function postChange() {
@@ -1744,10 +1798,10 @@ permalink: /
             let subject = '', orig = '';
             if (type === 'swap') {
                 const it = chgTargetItem();
-                if (!it) { err.textContent = 'その曜日・時限には授業がありません'; return; }
-                orig = it.subject;
-                subject = $('chg-subject').value.trim();
-                if (!subject) { err.textContent = '変更後の科目名を入力してください'; return; }
+                orig = it ? it.subject : '';
+                subject = $('chg-subject-sel').value;
+                if (!subject) { err.textContent = '変更後の授業を選んでください'; return; }
+                if (subject === orig) { err.textContent = '変更前と同じ授業です'; return; }
             } else if (type === 'makeup') {
                 subject = $('chg-subject').value.trim();
                 if (!subject) { err.textContent = '補講の科目名を入力してください'; return; }
@@ -1759,7 +1813,7 @@ permalink: /
             if (!noticeDb || !isAdmin) { err.textContent = 'ログインしていません'; return; }
             try {
                 await noticeDb.collection('changes').add({
-                    date: date, period: period, type: type, subject: subject, orig: orig, room: room, note: note,
+                    date: date, period: period, type: type, subject: subject, orig: orig, room: type === 'makeup' ? room : '', note: note,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 $('chg-room').value = ''; $('chg-note').value = ''; $('chg-subject').value = '';
@@ -1776,6 +1830,94 @@ permalink: /
             const del = e.target.closest('[data-chg-del]');
             if (del) { deleteChange(del.dataset.chgDel); return; }
             if (e.target.closest('[data-act="chg-add"]')) postChange();
+        }
+
+        // ==================== 先週のチャンピオン（各難易度の1位）====================
+        const MS_CHAMP_KEY = 'ms-champ';
+        const MS_CHAMP_SHOWN = 'ms-champ-shown';
+        let champInfo = null;  // { week, levels: [{ level, streak }] }
+
+        function applyChampionStyle() {
+            document.body.classList.toggle('champ', champActiveToday());
+        }
+        // チャンピオン表示（金色・👑の旗）は、週のうち月曜日の1日だけ
+        function champActiveToday() {
+            return !!(champInfo && champInfo.levels.length) && getNow().getDay() === 1;
+        }
+        function champSummary() {
+            if (!champInfo || !champInfo.levels.length) return '';
+            return champInfo.levels.map(c => MS_LEVELS[c.level] + (c.streak >= 2 ? c.streak + '連覇中' : 'チャンピオン')).join(' / ');
+        }
+        function showChampionCelebration() {
+            if (!champInfo || !champInfo.levels.length) return;
+            const maxStreak = Math.max.apply(null, champInfo.levels.map(c => c.streak));
+            const big = maxStreak >= 3;
+            const ov = document.createElement('div');
+            ov.className = 'champ-ov';
+            const lines = champInfo.levels.map(c => '<div class="lv">' + MS_LEVELS[c.level] + (c.streak >= 2 ? '　🔥 ' + c.streak + '連覇中！' : '') + '</div>').join('');
+            ov.innerHTML = '<div class="champ-box' + (big ? ' big' : '') + '"><div class="crown">👑</div><h2>' + (big ? '伝説のチャンピオン！' : 'チャンピオン！') + '</h2><div class="lv" style="opacity:.8">先週のマインスイーパー 1位</div>' + lines + '<div class="hint">タップで閉じる</div></div>';
+            const colors = ['#ff5a5f', '#ffb400', '#2ec4b6', '#4361ee', '#b5179e', '#ffffff'];
+            const n = big ? 220 : maxStreak >= 2 ? 130 : 70;
+            for (let i = 0; i < n; i++) {
+                const c = document.createElement('span');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.background = colors[i % colors.length];
+                c.style.animationDuration = (2.2 + Math.random() * 2.6) + 's';
+                c.style.animationDelay = (Math.random() * (big ? 2.4 : 1.4)) + 's';
+                c.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
+                ov.appendChild(c);
+            }
+            ov.addEventListener('click', () => ov.remove());
+            document.body.appendChild(ov);
+            try { localStorage.setItem(MS_CHAMP_SHOWN, msWeekKey(0)); } catch (e) { /* 無視 */ }
+        }
+        async function checkChampion(tries) {
+            tries = tries || 0;
+            if (!noticeDb) { if (tries < 8) setTimeout(() => checkChampion(tries + 1), 1500); return; }
+            let me = '';
+            try { me = localStorage.getItem(MS_DEV_KEY) || ''; } catch (e) { me = ''; }
+            if (!me) return;
+            const thisWeek = msWeekKey(0);
+            try {
+                const weeks = [1, 2, 3, 4, 5, 6].map(k => msWeekKey(-k));
+                const snap = await noticeDb.collection('scores').where('week', 'in', weeks).limit(1000).get();
+                // 週ごと・難易度ごとに、端末ごとのベストを出して1位を決める（同タイムは先に出した人）
+                const best = {};
+                snap.docs.forEach(d => {
+                    const v = d.data();
+                    const lv = Number(v.level), t = Number(v.time);
+                    if (!(lv >= 0 && lv <= 2) || !(t > 0) || !v.device) return;
+                    const ts = v.createdAt && v.createdAt.toMillis ? v.createdAt.toMillis() : 0;
+                    const key = v.week + '|' + lv;
+                    const cur = best[key];
+                    if (!cur || t < cur.t || (t === cur.t && ts && ts < cur.ts)) best[key] = { t: t, ts: ts, device: v.device };
+                    // 同じ端末の自己ベストが勝ち残るようにするため、端末ごとの最小は上の比較で足りる
+                });
+                const levels = [];
+                [0, 1, 2].forEach(lv => {
+                    let streak = 0;
+                    for (let k = 1; k <= 6; k++) {
+                        const b = best[msWeekKey(-k) + '|' + lv];
+                        if (b && b.device === me) streak++; else break;
+                    }
+                    if (streak >= 1) levels.push({ level: lv, streak: streak });
+                });
+                champInfo = { week: thisWeek, levels: levels };
+                try { localStorage.setItem(MS_CHAMP_KEY, JSON.stringify(champInfo)); } catch (e) { /* 無視 */ }
+                applyChampionStyle();
+                let shown = '';
+                try { shown = localStorage.getItem(MS_CHAMP_SHOWN) || ''; } catch (e) { shown = ''; }
+                if (levels.length && shown !== thisWeek) showChampionCelebration();
+            } catch (e) { console.warn('champion', e); }
+        }
+        function initChampion() {
+            try {
+                const c = JSON.parse(localStorage.getItem(MS_CHAMP_KEY) || 'null');
+                if (c && c.week === msWeekKey(0)) { champInfo = c; applyChampionStyle(); }
+            } catch (e) { /* 無視 */ }
+            checkChampion(0);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) applyChampionStyle(); });
         }
 
         // ==================== マインスイーパー 週間ランキング ====================
@@ -2386,7 +2528,7 @@ permalink: /
         }
 
         function openSubjectModal(dayCode, periodId) {
-            const item = scheduleItem(dayCode, periodId, displayDateISO(dayCode));
+            const item = effectiveItem(dayCode, periodId, displayDateISO(dayCode));
             if (!item || item.subject === 'なし') return;
 
             activeSelectedSubject = { day: dayCode, period: periodId, ...item };
@@ -2681,6 +2823,7 @@ permalink: /
             $('calendar-modal-body').addEventListener('click', onCalendarBodyClick);
             $('notice-modal-body').addEventListener('click', onChangesClick);
             setupWeekSwipe();
+            initChampion();
             $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '' }; showRanking(); } });
             $('rank-panel').addEventListener('click', onRankClick);
             window.addEventListener('message', (e) => {
@@ -2914,7 +3057,15 @@ init();
             const f = document.createElement('iframe');
             f.id = 'game-frame';
             f.title = 'マインスイーパー';
-            f.srcdoc = document.getElementById('game-src').textContent.replace(/<\\\/script>/g, '<' + '/script>');
+            let gsrc = document.getElementById('game-src').textContent.replace(/<\\\/script>/g, '<' + '/script>');
+            try {
+                if (champActiveToday()) {
+                    gsrc = gsrc.split("e.textContent='🚩'").join("e.textContent='👑'")
+                        .replace('🚩 旗モード', '👑 旗モード')
+                        .replace('<h1>マインスイーパー</h1>', '<h1>マインスイーパー</h1><div style="font-size:13px;font-weight:800;color:#a06c00;margin:-4px 0 0">👑 ' + champSummary() + '</div>');
+                }
+            } catch (e) { /* 無視 */ }
+            f.srcdoc = gsrc;
             body.appendChild(f);
         }
         modal.classList.remove('hidden');
