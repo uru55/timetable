@@ -42,9 +42,9 @@ function changeMessage(v) {
     date = `${m}/${d}(${w})`;
   }
   const per = v.period ? `${v.period}限` : '';
-  const sub = v.type === 'swap' ? (v.orig || '') : (v.subject || '');
+  const sub = v.type === 'swap' ? (v.orig || '空きコマ') : (v.subject || '');
   let tail = label;
-  if (v.type === 'swap') tail = `授業変更 → ${v.subject || ''}${v.room ? '（教室 ' + v.room + '）' : ''}`;
+  if (v.type === 'swap') tail = `授業変更 → ${v.subject || ''}`;
   if (v.type === 'makeup' && v.room) tail = `補講（教室 ${v.room}）`;
   return { title: `${label}のお知らせ`, body: `${date}${per} ${sub} ${tail}`.replace(/\s+/g, ' ').trim().slice(0, 120) };
 }
