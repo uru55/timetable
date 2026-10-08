@@ -1280,7 +1280,7 @@ permalink: /
         function baseMonday() {
             const now = getNow(), dow = now.getDay();
             const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)));
+            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? -5 : -(dow - 1)));
             return d;
         }
         function weekBounds() {
@@ -1344,9 +1344,9 @@ permalink: /
             const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
             const currentDayCode = (isWeekday && weekOffset === 0) ? dayCodes[dayOfWeek] : null;
 
-            // 曜日ヘッダーの日付 (土日は翌週の日付を表示)
+            // 曜日ヘッダーの日付 (日曜のみ翌週の日付を表示)
             const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const offset = dayOfWeek === 0 ? 1 : dayOfWeek === 6 ? 2 : -(dayOfWeek - 1);
+            const offset = dayOfWeek === 0 ? 1 : dayOfWeek === 6 ? -5 : -(dayOfWeek - 1);
             monday.setDate(monday.getDate() + offset + weekOffset * 7);
             DAYS.forEach((d, i) => {
                 const dt = new Date(monday);
@@ -1636,7 +1636,7 @@ permalink: /
             const now = getNow();
             const dow = now.getDay();
             const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? 2 : -(dow - 1)) + weekOffset * 7 + DAYS.findIndex(x => x.code === dayCode));
+            d.setDate(d.getDate() + (dow === 0 ? 1 : dow === 6 ? -5 : -(dow - 1)) + weekOffset * 7 + DAYS.findIndex(x => x.code === dayCode));
             return isoOf(d);
         }
         function changesFor(dateISO, periodId) {
