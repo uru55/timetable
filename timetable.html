@@ -515,7 +515,8 @@ permalink: /
         .due-banner { flex: none; width: calc(100% - 16px); margin: 8px auto 0; max-width: 1100px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; }
         .due-banner span { flex: 1; min-width: 0; }
         .due-banner .btn { padding: 4px 12px; font-size: 12px; }
-        .notice-head-row { display: flex; align-items: center; gap: 10px; }
+        .notice-head-row { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; }
+        #game-modal-title { white-space: nowrap; }
         .notice-push-btn { padding: 2px 9px; font-size: 10px; font-weight: 700; line-height: 1.5; color: var(--bg); background: transparent; border: 1px solid color-mix(in srgb, var(--bg) 55%, transparent); border-radius: 99px; cursor: pointer; white-space: nowrap; }
         .notice-push-btn.on { color: var(--ink); background: var(--bg); border-color: var(--bg); }
         .push-card { margin-bottom: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
@@ -553,6 +554,13 @@ permalink: /
         .chg-ops .btn { padding: 4px 12px; font-size: 12px; }
 
         /* マインスイーパー週間ランキング */
+        .title-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .title-card { border: 1px dashed var(--line, rgba(128,128,128,.4)); border-radius: 14px; padding: 12px 10px; text-align: center; opacity: .55; background: var(--surface); }
+        .title-card.got { opacity: 1; border: 1px solid #d9a400; background: linear-gradient(160deg, #fff3c4, #f3cf5c); color: #3b2a00; box-shadow: 0 2px 10px rgba(224, 168, 0, .35); }
+        .title-card .ti { font-size: 34px; line-height: 1.2; }
+        .title-card .tn { font-weight: 900; font-size: 14px; margin-top: 2px; }
+        .title-card .td { font-size: 11px; margin-top: 4px; opacity: .85; }
+        .title-card .tw { font-size: 10px; margin-top: 4px; opacity: .7; }
         .sheet.game .rank-panel { padding: 14px 18px; gap: 10px; align-content: start; flex: 1; min-height: 0; overflow-y: auto; }
         .rank-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
         .rank-tab { padding: 4px 12px; font-size: 12px; font-weight: 700; color: var(--ink-2); background: transparent; border: 1px solid var(--line); border-radius: 99px; cursor: pointer; }
@@ -975,10 +983,12 @@ permalink: /
                 <div class="notice-head-row">
                     <h2 id="game-modal-title">マインスイーパー</h2>
                     <button id="game-rank-btn" class="notice-push-btn" type="button">🏆 週間ランキング</button>
+                    <button id="game-title-btn" class="notice-push-btn" type="button">🎖 称号</button>
                 </div>
             </div>
             <div class="sheet-body" id="game-body"></div>
             <div class="sheet-body rank-panel hidden" id="rank-panel"></div>
+            <div class="sheet-body rank-panel hidden" id="title-panel"></div>
         </div>
     </div>
 
@@ -1868,9 +1878,106 @@ permalink: /
                 c.style.transform = 'rotate(' + Math.random() * 360 + 'deg)';
                 ov.appendChild(c);
             }
-            ov.addEventListener('click', () => ov.remove());
+            ov.addEventListener('click', () => { ov.remove(); flushTitles(); });
             document.body.appendChild(ov);
             try { localStorage.setItem(MS_CHAMP_SHOWN, msWeekKey(0)); } catch (e) { /* 無視 */ }
+        }
+        // ---- 隠し称号 ----
+        const MS_TITLES_KEY = 'ms-titles';
+        const MS_TITLES = [
+            { id: 'first', icon: '🥇', name: '金メダル', desc: '週間ランキングで初めて1位になる' },
+            { id: 'second', icon: '🥈', name: '銀メダル', desc: '初めて2位になる' },
+            { id: 'podium', icon: '🥉', name: '銅メダル', desc: '初めて3位以内に入る' },
+            { id: 'streak3', icon: '🏅', name: '連覇', desc: '同じ難易度で3連覇する' },
+            { id: 'streak5', icon: '👑', name: '五連覇', desc: '同じ難易度で5連覇する' },
+            { id: 'triple', icon: '🏆', name: '三冠王', desc: '同じ週に、初級・中級・上級のすべてで1位になる' }
+        ];
+        function loadTitles() {
+            try { return JSON.parse(localStorage.getItem(MS_TITLES_KEY) || '{}') || {}; } catch (e) { return {}; }
+        }
+        let pendingTitles = [];
+        function flushTitles() {
+            if (document.querySelector('.champ-ov') || !pendingTitles.length) return;
+            const t = pendingTitles.shift();
+            const ov = document.createElement('div');
+            ov.className = 'champ-ov';
+            ov.innerHTML = '<div class="champ-box"><div class="lv" style="opacity:.8">🔓 隠し称号を獲得！</div><div class="crown">' + t.icon + '</div><h2>' + t.name + '</h2><div class="lv">' + t.desc + '</div><div class="hint">タップで閉じる</div></div>';
+            const colors = ['#ff5a5f', '#ffb400', '#2ec4b6', '#4361ee', '#b5179e', '#ffffff'];
+            for (let i = 0; i < 60; i++) {
+                const c = document.createElement('span');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.background = colors[i % colors.length];
+                c.style.animationDuration = (2 + Math.random() * 2) + 's';
+                c.style.animationDelay = (Math.random() * 1.2) + 's';
+                ov.appendChild(c);
+            }
+            ov.addEventListener('click', () => { ov.remove(); flushTitles(); });
+            document.body.appendChild(ov);
+        }
+        function renderTitlePanel() {
+            const got = loadTitles();
+            const list = MS_TITLES.filter(t => got[t.id]);
+            $('title-panel').innerHTML = list.length
+                ? '<div class="title-grid">' + list.map(t => '<div class="title-card got"><div class="ti">' + t.icon + '</div><div class="tn">' + t.name + '</div><div class="td">' + escapeHtml(t.desc) + '</div><div class="tw">' + escapeHtml(got[t.id].at || '') + ' 獲得</div></div>').join('') + '</div>'
+                : '<p class="notice-empty">まだ称号はありません</p>';
+        }
+        function isTitleOpen() { return !$('title-panel').classList.contains('hidden'); }
+        function showTitles() {
+            hideRanking();
+            $('game-body').classList.add('hidden');
+            $('title-panel').classList.remove('hidden');
+            $('game-title-btn').textContent = '← ゲームに戻る';
+            renderTitlePanel();
+        }
+        function hideTitles() {
+            $('title-panel').classList.add('hidden');
+            if (!isRankOpen()) $('game-body').classList.remove('hidden');
+            $('game-title-btn').textContent = '🎖 称号';
+        }
+        // 終わった週の記録から、自分の順位・連覇・称号を計算する
+        function analyzeScores(docs, me) {
+            const WEEKS = 8;
+            const by = {};  // 'week|level' -> device -> {t, ts}
+            docs.forEach(d => {
+                const v = d.data();
+                const lv = Number(v.level), t = Number(v.time);
+                if (!(lv >= 0 && lv <= 2) || !(t > 0) || !v.device) return;
+                const ts = v.createdAt && v.createdAt.toMillis ? v.createdAt.toMillis() : 0;
+                const key = v.week + '|' + lv;
+                const m = by[key] || (by[key] = {});
+                const cur = m[v.device];
+                if (!cur || t < cur.t || (t === cur.t && ts && ts < cur.ts)) m[v.device] = { t: t, ts: ts };
+            });
+            const rankOf = (week, lv) => {
+                const m = by[week + '|' + lv];
+                if (!m || !m[me]) return 0;
+                const order = Object.keys(m).sort((a, b) => m[a].t - m[b].t || (m[a].ts || 0) - (m[b].ts || 0));
+                return order.indexOf(me) + 1;
+            };
+            const weeks = [];  // 古い週 → 新しい週
+            for (let k = WEEKS; k >= 1; k--) weeks.push(msWeekKey(-k));
+            const r = { champ: [], titles: [] };
+            let first = false, second = false, podium = false, triple = false, bestRun = 0;
+            weeks.forEach(w => {
+                const ranks = [0, 1, 2].map(lv => rankOf(w, lv));
+                ranks.forEach(x => { if (x === 1) first = true; if (x === 2) second = true; if (x >= 1 && x <= 3) podium = true; });
+                if (ranks.every(x => x === 1)) triple = true;
+            });
+            [0, 1, 2].forEach(lv => {
+                let run = 0;
+                weeks.forEach(w => { if (rankOf(w, lv) === 1) { run++; bestRun = Math.max(bestRun, run); } else run = 0; });
+                let streak = 0;   // 先週から数えた現在の連覇
+                for (let k = 1; k <= WEEKS; k++) { if (rankOf(msWeekKey(-k), lv) === 1) streak++; else break; }
+                if (streak >= 1) r.champ.push({ level: lv, streak: streak });
+            });
+            if (first) r.titles.push('first');
+            if (second) r.titles.push('second');
+            if (podium) r.titles.push('podium');
+            if (bestRun >= 3) r.titles.push('streak3');
+            if (bestRun >= 5) r.titles.push('streak5');
+            if (triple) r.titles.push('triple');
+            return r;
         }
         async function checkChampion(tries) {
             tries = tries || 0;
@@ -1880,35 +1987,24 @@ permalink: /
             if (!me) return;
             const thisWeek = msWeekKey(0);
             try {
-                const weeks = [1, 2, 3, 4, 5, 6].map(k => msWeekKey(-k));
-                const snap = await noticeDb.collection('scores').where('week', 'in', weeks).limit(1000).get();
-                // 週ごと・難易度ごとに、端末ごとのベストを出して1位を決める（同タイムは先に出した人）
-                const best = {};
-                snap.docs.forEach(d => {
-                    const v = d.data();
-                    const lv = Number(v.level), t = Number(v.time);
-                    if (!(lv >= 0 && lv <= 2) || !(t > 0) || !v.device) return;
-                    const ts = v.createdAt && v.createdAt.toMillis ? v.createdAt.toMillis() : 0;
-                    const key = v.week + '|' + lv;
-                    const cur = best[key];
-                    if (!cur || t < cur.t || (t === cur.t && ts && ts < cur.ts)) best[key] = { t: t, ts: ts, device: v.device };
-                    // 同じ端末の自己ベストが勝ち残るようにするため、端末ごとの最小は上の比較で足りる
-                });
-                const levels = [];
-                [0, 1, 2].forEach(lv => {
-                    let streak = 0;
-                    for (let k = 1; k <= 6; k++) {
-                        const b = best[msWeekKey(-k) + '|' + lv];
-                        if (b && b.device === me) streak++; else break;
-                    }
-                    if (streak >= 1) levels.push({ level: lv, streak: streak });
-                });
-                champInfo = { week: thisWeek, levels: levels };
+                const weeks = [1, 2, 3, 4, 5, 6, 7, 8].map(k => msWeekKey(-k));
+                const snap = await noticeDb.collection('scores').where('week', 'in', weeks).limit(2000).get();
+                const res = analyzeScores(snap.docs, me);
+                champInfo = { week: thisWeek, levels: res.champ };
                 try { localStorage.setItem(MS_CHAMP_KEY, JSON.stringify(champInfo)); } catch (e) { /* 無視 */ }
                 applyChampionStyle();
+                // 新しい称号
+                const got = loadTitles();
+                const fresh = res.titles.filter(id => !got[id]);
+                fresh.forEach(id => { got[id] = { at: todayStr() }; });
+                if (fresh.length) {
+                    try { localStorage.setItem(MS_TITLES_KEY, JSON.stringify(got)); } catch (e) { /* 無視 */ }
+                    pendingTitles = pendingTitles.concat(MS_TITLES.filter(t => fresh.includes(t.id)));
+                }
                 let shown = '';
                 try { shown = localStorage.getItem(MS_CHAMP_SHOWN) || ''; } catch (e) { shown = ''; }
-                if (levels.length && shown !== thisWeek) showChampionCelebration();
+                if (res.champ.length && shown !== thisWeek) showChampionCelebration();
+                flushTitles();
             } catch (e) { console.warn('champion', e); }
         }
         function initChampion() {
@@ -2008,6 +2104,7 @@ permalink: /
                 </div>`;
         }
         function showRanking() {
+            if (isTitleOpen()) { $('title-panel').classList.add('hidden'); $('game-title-btn').textContent = '🎖 称号'; }
             $('game-body').classList.add('hidden');
             $('rank-panel').classList.remove('hidden');
             $('game-rank-btn').textContent = '← ゲームに戻る';
@@ -2015,7 +2112,7 @@ permalink: /
         }
         function hideRanking() {
             $('rank-panel').classList.add('hidden');
-            $('game-body').classList.remove('hidden');
+            if (!isTitleOpen()) $('game-body').classList.remove('hidden');
             $('game-rank-btn').textContent = '🏆 週間ランキング';
         }
         async function handleMsWin(level, time) {
@@ -2826,6 +2923,7 @@ permalink: /
             initChampion();
             $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '' }; showRanking(); } });
             $('rank-panel').addEventListener('click', onRankClick);
+            $('game-title-btn').addEventListener('click', () => { if (isTitleOpen()) hideTitles(); else showTitles(); });
             window.addEventListener('message', (e) => {
                 const f = document.getElementById('game-frame');
                 if (!f || e.source !== f.contentWindow) return;
@@ -3073,7 +3171,7 @@ init();
     function closeGame() {
         modal.classList.add('hidden');
         body.innerHTML = ''; // 閉じたらゲームを破棄（タイマーも止まる）
-        try { hideRanking(); } catch (e) { /* 無視 */ }
+        try { hideRanking(); hideTitles(); } catch (e) { /* 無視 */ }
     }
 
     toggle.addEventListener('change', () => {
