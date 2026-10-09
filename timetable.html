@@ -85,6 +85,7 @@ permalink: /
             :root { --pw: 76px; --gap: 2px; }
         }
 
+
         /* ==================== ベース ==================== */
         * { box-sizing: border-box; }
         html { -webkit-text-size-adjust: 100%; }
@@ -432,6 +433,8 @@ permalink: /
             --bg-size: 120px 120px;
         }
 
+        :root[data-pattern="shippo"], .pv[data-p="shippo"] { --bg-image: var(--geo-shippo, none); --bg-size: 40px 40px; }
+
         /* 着せ替えモーダル */
         .opt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
         .opt-grid.sm { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
@@ -605,14 +608,45 @@ permalink: /
             { id: 'blueprint', name: '青図面', dark: true, bg: '#0f3b6b', surface: '#14487f', ink: '#eaf4ff', ink2: '#b8d4f2', ink3: '#84a9d2', line: '#2b66a3', req: '#ffd25e', ele: '#7ee0c3', oth: '#a9c4e6', on: '#0f2b4d', pat: 'grid', pc: 'rgba(255,255,255,.12)' },
             { id: 'retro', name: '昭和レトロ', bg: '#f4e3c1', surface: '#fff6e0', ink: '#3b2314', ink2: '#7a4f33', ink3: '#a98466', line: '#e2c897', req: '#c8441b', ele: '#1c7a6e', oth: '#8a6b4f', pat: 'checker', pc: 'rgba(200,68,27,.08)' },
             { id: 'mono', name: 'モノクロ', bg: '#f2f2f2', surface: '#ffffff', ink: '#111111', ink2: '#444444', ink3: '#888888', line: '#cccccc', req: '#111111', ele: '#555555', oth: '#777777', pat: 'stripes', pc: 'rgba(0,0,0,.05)' },
-            { id: 'candy', name: 'キャンディ', bg: '#f3ecff', surface: '#ffffff', ink: '#2a1b4d', ink2: '#6a58a0', ink3: '#a396c8', line: '#e0d4fa', req: '#7c4dff', ele: '#ff5fa2', oth: '#8c80b0', pat: 'dots', pc: 'rgba(124,77,255,.15)' },
-            { id: 'cyber', name: 'サイバー', dark: true, bg: '#070b14', surface: '#0f1626', ink: '#dff8ff', ink2: '#8fd3e6', ink3: '#5a8fa0', line: '#16384a', req: '#00e5ff', ele: '#ff3df2', oth: '#7fa5b3', on: '#04121a', pat: 'grid', pc: 'rgba(0,229,255,.10)' }
+            { id: 'cyber', name: 'サイバー', dark: true, bg: '#070b14', surface: '#0f1626', ink: '#dff8ff', ink2: '#8fd3e6', ink3: '#5a8fa0', line: '#16384a', req: '#00e5ff', ele: '#ff3df2', oth: '#7fa5b3', on: '#04121a', pat: 'grid', pc: 'rgba(0,229,255,.10)' },
+            { id: 'shippo', name: '七宝', bg: '#eaf0fb', surface: '#ffffff', ink: '#14223d', ink2: '#46587f', ink3: '#7f8fb0', line: '#cbd7ee', req: '#2a4d9c', ele: '#c2562d', oth: '#667394', pat: 'shippo', pc: 'rgba(42,77,156,.26)' },
         ];
         const PATTERNS = [
             ['auto', 'テーマ標準'], ['none', 'なし'], ['dots', 'ドット'], ['stripes', 'ストライプ'],
             ['grid', '方眼'], ['ruled', 'ノート罫線'], ['checker', '市松'], ['waves', '波'],
-            ['stars', '星']
+            ['stars', '星'], ['shippo', '七宝']
         ];
+        // 幾何学模様（線だけの小さな図形を敷き詰める）
+        const GEO_KINDS = ['shippo'];
+        function geoImg(kind, color) {
+            const c = String(color).replace(/#/g, '%23');
+            const hexPath = (cx, cy, r) => {
+                const w = r * Math.sqrt(3) / 2, f = n => n.toFixed(2);
+                return 'M' + f(cx) + ' ' + f(cy - r) + 'L' + f(cx + w) + ' ' + f(cy - r / 2) + 'L' + f(cx + w) + ' ' + f(cy + r / 2) + 'L' + f(cx) + ' ' + f(cy + r)
+                    + 'L' + f(cx - w) + ' ' + f(cy + r / 2) + 'L' + f(cx - w) + ' ' + f(cy - r / 2) + 'Z';
+            };
+            let w = 40, h = 40, body = '';
+            if (kind === 'hex') {
+                const r = 16, W = r * Math.sqrt(3); w = W; h = 48;
+                body = [[W / 2, 16], [0, 40], [W, 40], [W / 2, 64], [0, -8], [W, -8]].map(([x, y]) => `%3Cpath d='${hexPath(x, y, r)}'/%3E`).join('');
+            } else if (kind === 'cube') {
+                const r = 20, W = r * Math.sqrt(3); w = W; h = 60;
+                const cells = [[W / 2, 20], [0, 50], [W, 50], [W / 2, 80], [0, -10], [W, -10]];
+                body = cells.map(([x, y]) => `%3Cpath d='${hexPath(x, y, r)}M${x.toFixed(2)} ${y}L${(x - W / 2).toFixed(2)} ${y - r / 2}M${x.toFixed(2)} ${y}L${(x + W / 2).toFixed(2)} ${y - r / 2}M${x.toFixed(2)} ${y}L${x.toFixed(2)} ${y + r}'/%3E`).join('');
+            } else if (kind === 'tri') {
+                w = 40; h = 34.64;
+                body = `%3Cpath d='M0 ${h}L${w / 2} 0M${w / 2} ${h}L${w} 0M${w / 2} 0L${w} ${h}M0 0L${w / 2} ${h}M0 0H${w}'/%3E`;
+            } else if (kind === 'argyle') {
+                body = `%3Cpath d='M20 0L40 20L20 40L0 20Z'/%3E`;
+            } else if (kind === 'shippo') {
+                const R = 28.28;
+                body = [[0, 0], [40, 0], [0, 40], [40, 40]].map(([x, y]) => `%3Ccircle cx='${x}' cy='${y}' r='${R}'/%3E`).join('');
+            } else if (kind === 'zigzag') {
+                w = 40; h = 20;
+                body = `%3Cpath d='M0 20L20 0L40 20'/%3E`;
+            }
+            return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${w.toFixed(2)}' height='${h.toFixed(2)}' viewBox='0 0 ${w.toFixed(2)} ${h.toFixed(2)}' fill='none' stroke='${c}' stroke-width='1.2' stroke-linejoin='round'%3E${body}%3C/svg%3E")`;
+        }
         function starImg(color) {
             const star = (cx, cy, R) => {
                 const pts = [];
@@ -627,7 +661,7 @@ permalink: /
                 + star(28, 28, 10) + star(88, 66, 7) + star(48, 100, 5) + star(108, 18, 4) + '%3C/svg%3E")';
         }
         const defaultReq = () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#86a5ff' : '#2447a6';
-        const VARS = ['--star-img', '--bg', '--surface', '--ink', '--ink-2', '--ink-3', '--line', '--req', '--req-tint', '--ele', '--ele-tint',
+        const VARS = ['--geo-shippo', '--star-img', '--bg', '--surface', '--ink', '--ink-2', '--ink-3', '--line', '--req', '--req-tint', '--ele', '--ele-tint',
             '--oth', '--oth-tint', '--on-solid', '--today', '--danger', '--danger-tint', '--warn', '--warn-tint', '--ok-tint', '--pc', 'color-scheme'];
 
         const root = document.documentElement;
@@ -650,6 +684,7 @@ permalink: /
             VARS.forEach(v => s.removeProperty(v));
             const t = THEMES.find(x => x.id === state.theme) || THEMES[0];
             s.setProperty('--star-img', starImg(t.id === 'default' ? defaultReq() : t.req));
+            { const gc = t.pc || 'rgba(120,130,150,.28)'; GEO_KINDS.forEach(k => s.setProperty('--geo-' + k, geoImg(k, gc))); }
             if (t.id !== 'default') {
                 const x = t.dark ? DARK : LIGHT;
                 const mix = (c, p, base) => `color-mix(in srgb, ${c} ${p}%, ${base})`;
@@ -734,6 +769,7 @@ permalink: /
             themeGrid.querySelectorAll('.opt').forEach(b => {
                 const t = THEMES.find(x => x.id === b.dataset.themeId);
                 if (t && t.id !== 'default') b.querySelector('.pv').style.setProperty('--star-img', starImg(t.req));
+                if (t && GEO_KINDS.includes(t.pat)) b.querySelector('.pv').style.setProperty('--geo-' + t.pat, geoImg(t.pat, t.pc));
             });
 
             patGrid.innerHTML = PATTERNS.map(([id, name]) => `
@@ -759,7 +795,7 @@ permalink: /
             modal.addEventListener('click', e => { if (e.target === modal) close(); });
             document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
         }
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => { init(); });
     })();
     </script>
 </head>
