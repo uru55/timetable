@@ -970,7 +970,7 @@ permalink: /
                         <input type="text" id="modal-todo-input" class="field" placeholder="課題を入力">
                         <input type="date" id="modal-todo-date" class="field" aria-label="提出期限">
                         <button id="modal-todo-add-btn" class="btn" type="button">追加</button>
-                        <label id="modal-todo-repeat-wrap" class="shared-check" style="color:var(--ink-2)"><input type="checkbox" id="modal-todo-repeat"> 毎週くり返す（授業が終わったら自動で追加。期限は次の授業日の前日）</label>
+                        <label id="modal-todo-repeat-wrap" class="shared-check hidden"><input type="checkbox" id="modal-todo-repeat"> 毎週くり返す（管理者のみ。授業が終わったら全員に自動で追加。期限は次の授業日の前日）</label>
                         <label id="modal-todo-shared-wrap" class="shared-check hidden"><input type="checkbox" id="modal-todo-shared"> 全員に共有する（管理者）</label>
                     </div>
                     <ul id="modal-todo-list" class="list"></ul>
@@ -1584,7 +1584,7 @@ permalink: /
                 subjectTodos[k] = (subjectTodos[k] || []).filter(t => !t.shared);
             });
             sharedTodoDocs.forEach(d => {
-                if (!d.subjectKey) return;
+                if (!d.subjectKey || d.repeat) return;
                 if (!subjectTodos[d.subjectKey]) subjectTodos[d.subjectKey] = [];
                 subjectTodos[d.subjectKey].push({
                     text: d.text, dueDate: d.dueDate || '', completed: !!sharedDone[d.docId],
@@ -1611,11 +1611,11 @@ permalink: /
             return '保存できませんでした' + (c ? '（' + c + '）' : '');
         }
 
-        async function postSharedTodo(subjectKey, text, dueDate, subjectName) {
+        async function postSharedTodo(subjectKey, text, dueDate, subjectName, repeat) {
             if (!noticeDb || !isAdmin) return;
             try {
                 await noticeDb.collection('sharedTodos').add({
-                    subjectKey: subjectKey, subject: subjectName || '', text: text, dueDate: dueDate || '',
+                    subjectKey: subjectKey, subject: subjectName || '', text: text, dueDate: dueDate || '', repeat: !!repeat,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (e) { alert(sharedErrText(e)); }
@@ -1671,13 +1671,14 @@ permalink: /
                 sharedTodoDocs = snap.docs.map(d => {
                     const v = d.data();
                     return {
-                        docId: d.id, subjectKey: v.subjectKey || '', text: v.text || '', dueDate: v.dueDate || '',
+                        docId: d.id, subjectKey: v.subjectKey || '', subject: v.subject || '', repeat: !!v.repeat, text: v.text || '', dueDate: v.dueDate || '',
                         createdAt: v.createdAt && v.createdAt.toMillis ? new Date(v.createdAt.toMillis()).toISOString() : ''
                     };
                 });
                 try { localStorage.setItem(SHARED_TODO_CACHE, JSON.stringify(sharedTodoDocs)); } catch (e) { /* 無視 */ }
                 applySharedTodos();
                 refreshAfterSharedTodos();
+                try { runRepeatRules(); renderRepeatList(); } catch (e) { /* 無視 */ }
             }, err => console.warn('sharedTodos', err));
             noticeDb.collection('changes').onSnapshot(snap => {
                 sharedChanges = snap.docs.filter(d => d.data().type !== 'room').map(d => {
@@ -2167,6 +2168,9 @@ permalink: /
                     $('notice-admin-btn').textContent = 'ログアウト';
                     $('notice-admin-btn').classList.toggle('hidden', !isAdmin);
                     $('modal-todo-shared-wrap').classList.toggle('hidden', !isAdmin);
+                    $('modal-todo-repeat-wrap').classList.toggle('hidden', !isAdmin);
+                    if (!isAdmin) $('modal-todo-repeat').checked = false;
+                    try { renderRepeatList(); } catch (e) { /* 無視 */ }
                     if (!isAdmin) $('modal-todo-shared').checked = false;
                     
                     if (isRankOpen()) renderRanking();
@@ -2712,7 +2716,8 @@ permalink: /
         /* ---------- 毎週くり返す課題 ---------- */
         const STORAGE_KEY_REPEAT = 'nit_4it_timetable_repeat_v1';
         let repeatRules = [];   // { id, subject, text, upto }  upto = ここまでの授業日は処理済み
-        try { repeatRules = JSON.parse(localStorage.getItem(STORAGE_KEY_REPEAT) || '[]') || []; } catch (e) { repeatRules = []; }
+        repeatRules = [];  // 個人のくり返しは廃止（管理者が共有したものだけ動く）
+        try { localStorage.removeItem(STORAGE_KEY_REPEAT); } catch (e) { /* 無視 */ }
         function saveRepeatRules() { try { localStorage.setItem(STORAGE_KEY_REPEAT, JSON.stringify(repeatRules)); } catch (e) { /* 無視 */ } }
         function addDaysISO(iso, n) { const d = parseDate(iso); d.setDate(d.getDate() + n); return isoOf(d); }
         // その日にある、指定科目の授業枠（休講は除く）。[{ key, end: その授業の終了時刻(ms) }]
@@ -2734,12 +2739,24 @@ permalink: /
             for (let i = 1; i <= 14; i++) { const d = addDaysISO(iso, i); if (classSlotsOn(d, subject).length) return d; }
             return addDaysISO(iso, 7);
         }
+        // 管理者が全員に共有した「毎週くり返す課題」。この端末で処理した時刻は端末ごとに覚える
+        const SHARED_REPEAT_T = 'nit_4it_timetable_shared_repeat_t_v1';
+        let sharedRepeatT = {};
+        try { sharedRepeatT = JSON.parse(localStorage.getItem(SHARED_REPEAT_T) || '{}') || {}; } catch (e) { sharedRepeatT = {}; }
+        function sharedRepeatRules(nowT) {
+            return sharedTodoDocs.filter(d => d.repeat && d.subject).map(d => {
+                const created = d.createdAt ? new Date(d.createdAt).getTime() : nowT;
+                const t = sharedRepeatT[d.docId] || Math.max(created, nowT - 7 * 86400000);
+                return { id: 's_' + d.docId, docId: d.docId, shared: true, subject: d.subject, text: d.text, t: t };
+            });
+        }
         // 授業が終わった時刻になったら、くり返し課題を追加する（期限は次の授業日の前日）
         function runRepeatRules() {
-            if (!repeatRules.length) return;
+            if (!repeatRules.length && !sharedTodoDocs.some(d => d.repeat)) return;
             const nowT = getNow().getTime();
-            let added = 0, changed = false;
-            repeatRules.forEach(rule => {
+            let added = 0, changed = false, mapChanged = false;
+            const shared = sharedRepeatRules(nowT);
+            repeatRules.concat(shared).forEach(rule => {
                 if (!rule.t) { rule.t = (rule.upto ? parseDate(rule.upto).getTime() + 86400000 : nowT); changed = true; }
                 if (rule.t >= nowT) return;
                 const found = [];
@@ -2754,17 +2771,22 @@ permalink: /
                     added++;
                 });
                 rule.t = nowT; changed = true;
+                if (rule.shared) { sharedRepeatT[rule.docId] = nowT; mapChanged = true; }
             });
             if (changed) saveRepeatRules();
+            if (mapChanged) { try { localStorage.setItem(SHARED_REPEAT_T, JSON.stringify(sharedRepeatT)); } catch (e) { /* 無視 */ } }
             if (added) { saveStoredData(STORAGE_KEY_TODO, subjectTodos); try { renderTimetable(); refreshAfterSharedTodos(); } catch (e) { /* 無視 */ } }
         }
         const WEEK_LAST_ISO = '2027-02-17';
         function renderRepeatList() {
             const el = $('modal-repeat-list');
             if (!el || !activeSelectedSubject) return;
-            const rs = repeatRules.filter(r => r.subject === activeSelectedSubject.subject);
-            el.innerHTML = rs.map(r => `<li class="row"><label><span class="txt">🔁 毎週: ${escapeHtml(r.text)}</span></label>
-                <div class="end"><button type="button" class="icon-btn" aria-label="くり返しをやめる" onclick="deleteRepeatRule('${r.id}')">${icon('trash')}</button></div></li>`).join('');
+            const subj = activeSelectedSubject.subject;
+            const mine = repeatRules.filter(r => r.subject === subj).map(r => `<li class="row"><label><span class="txt">🔁 毎週: ${escapeHtml(r.text)}</span></label>
+                <div class="end"><button type="button" class="icon-btn" aria-label="くり返しをやめる" onclick="deleteRepeatRule('${r.id}')">${icon('trash')}</button></div></li>`);
+            const common = sharedTodoDocs.filter(d => d.repeat && d.subject === subj).map(d => `<li class="row"><label><span class="txt">🔁 毎週: ${escapeHtml(d.text)}<span class="shared-tag">共通</span></span></label>
+                <div class="end">${isAdmin ? `<button type="button" class="icon-btn" aria-label="共通のくり返しを削除" onclick="deleteSharedTodo('${d.docId}')">${icon('trash')}</button>` : ''}</div></li>`);
+            el.innerHTML = common.concat(mine).join('');
         }
         function deleteRepeatRule(id) {
             repeatRules = repeatRules.filter(r => r.id !== id);
@@ -2780,8 +2802,10 @@ permalink: /
             if (!text) return;
 
             const sharedBox = $('modal-todo-shared');
-            if (isAdmin && sharedBox && sharedBox.checked) {
-                postSharedTodo(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`, text, dueDate, activeSelectedSubject.subject);
+            const repOn = isAdmin && $('modal-todo-repeat') && $('modal-todo-repeat').checked;
+            if (isAdmin && ((sharedBox && sharedBox.checked) || repOn)) {
+                postSharedTodo(`${activeSelectedSubject.day}_${activeSelectedSubject.period}`, text, repOn ? '' : dueDate, activeSelectedSubject.subject, repOn);
+                if (repOn) $('modal-todo-repeat').checked = false;
                 input.value = '';
                 dateInput.value = '';
                 return;
@@ -2791,14 +2815,6 @@ permalink: /
             if (!subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey] = [];
             }
-            const rep = $('modal-todo-repeat');
-            if (rep && rep.checked) {
-                repeatRules.push({ id: 'r' + Date.now().toString(36), subject: activeSelectedSubject.subject, text: text, t: getNow().getTime() });
-                saveRepeatRules(); rep.checked = false; renderRepeatList(); runRepeatRules();
-                input.value = ''; dateInput.value = '';
-                return;
-            }
-
             subjectTodos[subjectKey].push({
                 text: text,
                 dueDate: dueDate || '',
