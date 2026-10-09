@@ -554,10 +554,10 @@ permalink: /
         .chg-ops .btn { padding: 4px 12px; font-size: 12px; }
 
         /* マインスイーパー週間ランキング */
-        .title-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .title-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
         .title-card { border: 1px dashed var(--line, rgba(128,128,128,.4)); border-radius: 14px; padding: 12px 10px; text-align: center; opacity: .55; background: var(--surface); }
         .title-card.got { opacity: 1; border: 1px solid #d9a400; background: linear-gradient(160deg, #fff3c4, #f3cf5c); color: #3b2a00; box-shadow: 0 2px 10px rgba(224, 168, 0, .35); }
-        .title-card .ti { font-size: 34px; line-height: 1.2; }
+        .title-card .ti { line-height: 0; display: flex; justify-content: center; padding: 2px 0 6px; }
         .title-card .tn { font-weight: 900; font-size: 14px; margin-top: 2px; }
         .title-card .td { font-size: 11px; margin-top: 4px; opacity: .85; }
         .title-card .tw { font-size: 10px; margin-top: 4px; opacity: .7; }
@@ -983,7 +983,7 @@ permalink: /
                 <div class="notice-head-row">
                     <h2 id="game-modal-title">マインスイーパー</h2>
                     <button id="game-rank-btn" class="notice-push-btn" type="button">🏆 週間ランキング</button>
-                    <button id="game-title-btn" class="notice-push-btn" type="button">🎖 称号</button>
+                    <button id="game-title-btn" class="notice-push-btn" type="button">🎖 バッジ</button>
                 </div>
             </div>
             <div class="sheet-body" id="game-body"></div>
@@ -1882,7 +1882,7 @@ permalink: /
             document.body.appendChild(ov);
             try { localStorage.setItem(MS_CHAMP_SHOWN, msWeekKey(0)); } catch (e) { /* 無視 */ }
         }
-        // ---- 隠し称号 ----
+        // ---- 隠しバッジ ----
         const MS_TITLES_KEY = 'ms-titles';
         const MS_TITLES = [
             { id: 'first', icon: '🥇', name: '金メダル', desc: '週間ランキングで初めて1位になる' },
@@ -1892,6 +1892,39 @@ permalink: /
             { id: 'streak5', icon: '👑', name: '五連覇', desc: '同じ難易度で5連覇する' },
             { id: 'triple', icon: '🏆', name: '三冠王', desc: '同じ週に、初級・中級・上級のすべてで1位になる' }
         ];
+        // バッジ（絵文字ではなく図形で描く）
+        function starPts(cx, cy, R, r) {
+            const pts = [];
+            for (let i = 0; i < 10; i++) {
+                const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R;
+                pts.push((cx + rad * Math.cos(a)).toFixed(2) + ',' + (cy + rad * Math.sin(a)).toFixed(2));
+            }
+            return pts.join(' ');
+        }
+        function starSvg(cx, cy, R, fill, edge) {
+            return '<polygon points="' + starPts(cx, cy, R, R * 0.45) + '" fill="' + fill + '" stroke="' + edge + '" stroke-width="1.2" stroke-linejoin="round"/>';
+        }
+        function titleBadge(id, size) {
+            const G = ['#ffe27a', '#b98700'], S = ['#eef2f6', '#7d8894'], B = ['#e29a5b', '#8a4a1c'];
+            let inner = '';
+            if (id === 'first') inner = starSvg(50, 52, 30, G[0], G[1]);
+            else if (id === 'second') inner = starSvg(50, 52, 30, S[0], S[1]);
+            else if (id === 'podium') inner = starSvg(50, 52, 30, B[0], B[1]);
+            else if (id === 'streak3') inner = starSvg(24, 56, 15, G[0], G[1]) + starSvg(50, 46, 17, G[0], G[1]) + starSvg(76, 56, 15, G[0], G[1]);
+            else if (id === 'streak5') {
+                for (let i = 0; i < 5; i++) {
+                    const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
+                    inner += starSvg(50 + 29 * Math.cos(a), 50 + 29 * Math.sin(a), 11, G[0], G[1]);
+                }
+            } else if (id === 'triple') {
+                inner = '<g fill="none" stroke-width="6" opacity=".95">' +
+                    '<circle cx="36" cy="38" r="22" stroke="#ffd23f"/>' +
+                    '<circle cx="64" cy="38" r="22" stroke="#4cc9f0"/>' +
+                    '<circle cx="50" cy="64" r="22" stroke="#ff5d8f"/></g>';
+            }
+            return '<svg class="tbadge" width="' + (size || 64) + '" height="' + (size || 64) + '" viewBox="0 0 100 100" role="img" aria-hidden="true">' +
+                '<circle cx="50" cy="50" r="47" fill="#1b2335" stroke="#d9a400" stroke-width="3"/>' + inner + '</svg>';
+        }
         function loadTitles() {
             try { return JSON.parse(localStorage.getItem(MS_TITLES_KEY) || '{}') || {}; } catch (e) { return {}; }
         }
@@ -1901,7 +1934,7 @@ permalink: /
             const t = pendingTitles.shift();
             const ov = document.createElement('div');
             ov.className = 'champ-ov';
-            ov.innerHTML = '<div class="champ-box"><div class="lv" style="opacity:.8">🔓 隠し称号を獲得！</div><div class="crown">' + t.icon + '</div><h2>' + t.name + '</h2><div class="lv">' + t.desc + '</div><div class="hint">タップで閉じる</div></div>';
+            ov.innerHTML = '<div class="champ-box"><div class="crown" style="line-height:0">' + titleBadge(t.id, 120) + '</div><div class="hint">タップで閉じる</div></div>';
             const colors = ['#ff5a5f', '#ffb400', '#2ec4b6', '#4361ee', '#b5179e', '#ffffff'];
             for (let i = 0; i < 60; i++) {
                 const c = document.createElement('span');
@@ -1919,8 +1952,8 @@ permalink: /
             const got = loadTitles();
             const list = MS_TITLES.filter(t => got[t.id]);
             $('title-panel').innerHTML = list.length
-                ? '<div class="title-grid">' + list.map(t => '<div class="title-card got"><div class="ti">' + t.icon + '</div><div class="tn">' + t.name + '</div><div class="td">' + escapeHtml(t.desc) + '</div><div class="tw">' + escapeHtml(got[t.id].at || '') + ' 獲得</div></div>').join('') + '</div>'
-                : '<p class="notice-empty">まだ称号はありません</p>';
+                ? '<div class="title-grid">' + list.map(t => '<div class="title-card got" role="img" aria-label="' + t.name + '"><div class="ti">' + titleBadge(t.id, 84) + '</div></div>').join('') + '</div>'
+                : '<p class="notice-empty">まだバッジはありません</p>';
         }
         function isTitleOpen() { return !$('title-panel').classList.contains('hidden'); }
         function showTitles() {
@@ -1933,9 +1966,9 @@ permalink: /
         function hideTitles() {
             $('title-panel').classList.add('hidden');
             if (!isRankOpen()) $('game-body').classList.remove('hidden');
-            $('game-title-btn').textContent = '🎖 称号';
+            $('game-title-btn').textContent = '🎖 バッジ';
         }
-        // 終わった週の記録から、自分の順位・連覇・称号を計算する
+        // 終わった週の記録から、自分の順位・連覇・バッジを計算する
         function analyzeScores(docs, me) {
             const WEEKS = 8;
             const by = {};  // 'week|level' -> device -> {t, ts}
@@ -1993,7 +2026,7 @@ permalink: /
                 champInfo = { week: thisWeek, levels: res.champ };
                 try { localStorage.setItem(MS_CHAMP_KEY, JSON.stringify(champInfo)); } catch (e) { /* 無視 */ }
                 applyChampionStyle();
-                // 新しい称号
+                // 新しいバッジ
                 const got = loadTitles();
                 const fresh = res.titles.filter(id => !got[id]);
                 fresh.forEach(id => { got[id] = { at: todayStr() }; });
@@ -2104,7 +2137,7 @@ permalink: /
                 </div>`;
         }
         function showRanking() {
-            if (isTitleOpen()) { $('title-panel').classList.add('hidden'); $('game-title-btn').textContent = '🎖 称号'; }
+            if (isTitleOpen()) { $('title-panel').classList.add('hidden'); $('game-title-btn').textContent = '🎖 バッジ'; }
             $('game-body').classList.add('hidden');
             $('rank-panel').classList.remove('hidden');
             $('game-rank-btn').textContent = '← ゲームに戻る';
