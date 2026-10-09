@@ -27,6 +27,7 @@ function noticeMessage(v) {
   return { title: '新しいお知らせ', body: String(v.title || '').slice(0, 120) };
 }
 function todoMessage(v) {
+  if (v.repeat) return { title: '毎週の課題が登録されました', body: `${subjectLabel(v)}：${v.text || ''}（授業のあと毎週追加されます）`.slice(0, 120) };
   const due = v.dueDate ? `（期限 ${fmtMD(v.dueDate)}）` : '';
   return { title: '新しい課題が追加されました', body: `${subjectLabel(v)}：${v.text || ''}${due}`.slice(0, 120) };
 }
