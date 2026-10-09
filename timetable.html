@@ -970,9 +970,11 @@ permalink: /
                         <input type="text" id="modal-todo-input" class="field" placeholder="課題を入力">
                         <input type="date" id="modal-todo-date" class="field" aria-label="提出期限">
                         <button id="modal-todo-add-btn" class="btn" type="button">追加</button>
+                        <label id="modal-todo-repeat-wrap" class="shared-check" style="color:var(--ink-2)"><input type="checkbox" id="modal-todo-repeat"> 毎週くり返す（授業が終わったら自動で追加。期限は次の授業日の前日）</label>
                         <label id="modal-todo-shared-wrap" class="shared-check hidden"><input type="checkbox" id="modal-todo-shared"> 全員に共有する（管理者）</label>
                     </div>
                     <ul id="modal-todo-list" class="list"></ul>
+                    <ul id="modal-repeat-list" class="list"></ul>
                 </section>
 
                 <section class="sec">
@@ -2586,6 +2588,7 @@ permalink: /
             $('modal-memo').value = subjectMemos[subjectKey] || '';
             $('modal-todo-input').value = '';$('modal-todo-date').value = '';
             renderModalTodoList(subjectKey);
+            { const rp = $('modal-todo-repeat'); if (rp) rp.checked = false; renderRepeatList(); }
 
             $('subject-modal').classList.remove('hidden');
         }
@@ -2705,6 +2708,69 @@ permalink: /
             }
         }
 
+
+        /* ---------- 毎週くり返す課題 ---------- */
+        const STORAGE_KEY_REPEAT = 'nit_4it_timetable_repeat_v1';
+        let repeatRules = [];   // { id, subject, text, upto }  upto = ここまでの授業日は処理済み
+        try { repeatRules = JSON.parse(localStorage.getItem(STORAGE_KEY_REPEAT) || '[]') || []; } catch (e) { repeatRules = []; }
+        function saveRepeatRules() { try { localStorage.setItem(STORAGE_KEY_REPEAT, JSON.stringify(repeatRules)); } catch (e) { /* 無視 */ } }
+        function addDaysISO(iso, n) { const d = parseDate(iso); d.setDate(d.getDate() + n); return isoOf(d); }
+        // その日にある、指定科目の授業枠（休講は除く）。[{ key, end: その授業の終了時刻(ms) }]
+        function classSlotsOn(iso, subject) {
+            const dow = parseDate(iso).getDay();
+            if (dow < 1 || dow > 5) return [];
+            const day = DAYS[dow - 1].code, r = [];
+            PERIODS.forEach(pr => {
+                const it = effectiveItem(day, pr.id, iso);
+                if (it && it.subject === subject && !changesFor(iso, pr.id).cancel) {
+                    const [h, m] = pr.end.split(':').map(Number), d = parseDate(iso);
+                    d.setHours(h, m, 0, 0);
+                    r.push({ key: `${day}_${pr.id}`, end: d.getTime() });
+                }
+            });
+            return r;
+        }
+        function nextClassDate(iso, subject) {
+            for (let i = 1; i <= 14; i++) { const d = addDaysISO(iso, i); if (classSlotsOn(d, subject).length) return d; }
+            return addDaysISO(iso, 7);
+        }
+        // 授業が終わった時刻になったら、くり返し課題を追加する（期限は次の授業日の前日）
+        function runRepeatRules() {
+            if (!repeatRules.length) return;
+            const nowT = getNow().getTime();
+            let added = 0, changed = false;
+            repeatRules.forEach(rule => {
+                if (!rule.t) { rule.t = (rule.upto ? parseDate(rule.upto).getTime() + 86400000 : nowT); changed = true; }
+                if (rule.t >= nowT) return;
+                const found = [];
+                let guard = 0;
+                for (let d = isoOf(new Date(rule.t)); d <= isoOf(new Date(nowT)) && guard < 400; d = addDaysISO(d, 1), guard++) {
+                    if (d > WEEK_LAST_ISO) break;
+                    classSlotsOn(d, rule.subject).forEach(sl => { if (sl.end > rule.t && sl.end <= nowT) found.push({ d, sl }); });
+                }
+                found.sort((x, y) => x.sl.end - y.sl.end).forEach(({ d, sl }) => {
+                    const due = addDaysISO(nextClassDate(d, rule.subject), -1);
+                    (subjectTodos[sl.key] = subjectTodos[sl.key] || []).push({ text: rule.text, dueDate: due, completed: false, createdAt: new Date().toISOString(), auto: rule.id + '@' + d + '_' + sl.key });
+                    added++;
+                });
+                rule.t = nowT; changed = true;
+            });
+            if (changed) saveRepeatRules();
+            if (added) { saveStoredData(STORAGE_KEY_TODO, subjectTodos); try { renderTimetable(); refreshAfterSharedTodos(); } catch (e) { /* 無視 */ } }
+        }
+        const WEEK_LAST_ISO = '2027-02-17';
+        function renderRepeatList() {
+            const el = $('modal-repeat-list');
+            if (!el || !activeSelectedSubject) return;
+            const rs = repeatRules.filter(r => r.subject === activeSelectedSubject.subject);
+            el.innerHTML = rs.map(r => `<li class="row"><label><span class="txt">🔁 毎週: ${escapeHtml(r.text)}</span></label>
+                <div class="end"><button type="button" class="icon-btn" aria-label="くり返しをやめる" onclick="deleteRepeatRule('${r.id}')">${icon('trash')}</button></div></li>`).join('');
+        }
+        function deleteRepeatRule(id) {
+            repeatRules = repeatRules.filter(r => r.id !== id);
+            saveRepeatRules(); renderRepeatList();
+        }
+
         function addTodoItem() {
             if (!activeSelectedSubject) return;
             const input = $('modal-todo-input');
@@ -2724,6 +2790,13 @@ permalink: /
             const subjectKey = `${activeSelectedSubject.day}_${activeSelectedSubject.period}`;
             if (!subjectTodos[subjectKey]) {
                 subjectTodos[subjectKey] = [];
+            }
+            const rep = $('modal-todo-repeat');
+            if (rep && rep.checked) {
+                repeatRules.push({ id: 'r' + Date.now().toString(36), subject: activeSelectedSubject.subject, text: text, t: getNow().getTime() });
+                saveRepeatRules(); rep.checked = false; renderRepeatList(); runRepeatRules();
+                input.value = ''; dateInput.value = '';
+                return;
             }
 
             subjectTodos[subjectKey].push({
@@ -2820,6 +2893,9 @@ permalink: /
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            try { runRepeatRules(); } catch (e) { console.warn('repeat', e); }
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) { try { runRepeatRules(); } catch (e) { /* 無視 */ } } });
+            setInterval(() => { try { runRepeatRules(); } catch (e) { /* 無視 */ } }, 60000);
             renderTimetable();
             setInterval(updateCurrentTimeHighlight, 1000);
 
