@@ -3,6 +3,7 @@ name: Daily due reminder
 on:
   schedule:
     - cron: '0 22 * * *'   # 毎朝7:00（日本時間）。GitHubの混雑で数十分遅れることがあります
+    - cron: '0 8 * * *'    # 夕方17:00（日本時間）
   workflow_dispatch:         # 手動でも実行できる（動作テスト用）
 
 jobs:
