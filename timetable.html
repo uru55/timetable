@@ -1913,10 +1913,13 @@ permalink: /
         }
         async function checkChampion(tries) {
             tries = tries || 0;
-            if (!noticeDb) { if (tries < 8) setTimeout(() => checkChampion(tries + 1), 1500); return; }
+            window.__champAt = Date.now();
+            if (!noticeDb) { if (tries < 20) setTimeout(() => checkChampion(tries + 1), 1500); return; }
             let me = '';
             try { me = localStorage.getItem(MS_DEV_KEY) || ''; } catch (e) { me = ''; }
-            if (!me) return;
+            let myName = '';
+            try { myName = (localStorage.getItem(MS_NAME_KEY) || '').trim(); } catch (e) { myName = ''; }
+            if (!me && !myName) return;
             const thisWeek = msWeekKey(0);
             try {
                 const weeks = [1, 2, 3, 4, 5, 6].map(k => msWeekKey(-k));
@@ -1930,7 +1933,7 @@ permalink: /
                     const ts = v.createdAt && v.createdAt.toMillis ? v.createdAt.toMillis() : 0;
                     const key = v.week + '|' + lv;
                     const cur = best[key];
-                    if (!cur || t < cur.t || (t === cur.t && ts && ts < cur.ts)) best[key] = { t: t, ts: ts, device: v.device };
+                    if (!cur || t < cur.t || (t === cur.t && ts && ts < cur.ts)) best[key] = { t: t, ts: ts, device: v.device, name: String(v.name || '').trim() };
                     // 同じ端末の自己ベストが勝ち残るようにするため、端末ごとの最小は上の比較で足りる
                 });
                 const levels = [];
@@ -1938,7 +1941,7 @@ permalink: /
                     let streak = 0;
                     for (let k = 1; k <= 6; k++) {
                         const b = best[msWeekKey(-k) + '|' + lv];
-                        if (b && b.device === me) streak++; else break;
+                        if (b && ((me && b.device === me) || (myName && b.name === myName))) streak++; else break;
                     }
                     if (streak >= 1) levels.push({ level: lv, streak: streak });
                 });
@@ -1956,7 +1959,13 @@ permalink: /
                 if (c && c.week === msWeekKey(0)) { champInfo = c; applyChampionStyle(); }
             } catch (e) { /* 無視 */ }
             checkChampion(0);
-            document.addEventListener('visibilitychange', () => { if (!document.hidden) applyChampionStyle(); });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) return;
+                applyChampionStyle();
+                let shown = '';
+                try { shown = localStorage.getItem(MS_CHAMP_SHOWN) || ''; } catch (e) { shown = ''; }
+                if (shown !== msWeekKey(0) && Date.now() - (window.__champAt || 0) > 600000) { window.__champAt = Date.now(); checkChampion(0); }
+            });
         }
 
         // ==================== マインスイーパー 週間ランキング ====================
