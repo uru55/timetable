@@ -49,6 +49,8 @@ function changeMessage(v) {
   if (v.type === 'makeup' && v.room) tail = `補講（教室 ${v.room}）`;
   return { title: `${label}のお知らせ`, body: `${date}${per} ${sub} ${tail}`.replace(/\s+/g, ' ').trim().slice(0, 120) };
 }
+// 朝(am)と夕方(pm)で通知タグを分ける（夕方の通知が朝の通知を置き換えないように）
+function slotJST(now = Date.now()) { return new Date(now + 9 * 3600000).getUTCHours() < 12 ? 'am' : 'pm'; }
 function todayJST(now = Date.now()) {
   return new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
@@ -149,7 +151,7 @@ async function runDaily(db) {
   const tokens = await loadTokens(db);
   console.log(`${today}：${msg.title} / 送信先 ${tokens.length} 台`);
   const invalid = new Set();
-  await sendToAll(tokens, msg, 'due-' + today, invalid);
+  await sendToAll(tokens, msg, 'due-' + today + '-' + slotJST(), invalid);
   await cleanup(db, invalid);
 }
 
@@ -166,7 +168,7 @@ async function runPersonal(db) {
   for (const d of snap.docs) {
     const msg = personalMessage(d.get('mine'), today);
     if (!msg) continue;
-    await sendToAll([d.id], msg, 'mine-' + today, invalid);
+    await sendToAll([d.id], msg, 'mine-' + today + '-' + slotJST(), invalid);
     sent++;
   }
   console.log(`${today}：個人の課題の通知 ${sent} 台`);
