@@ -495,6 +495,8 @@ permalink: /
         .sheet.game { max-width: none; width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
         .sheet.game #game-body { flex: 1; min-height: 0; overflow: hidden; }
         .sheet.game .sheet-body { padding: 0; gap: 0; }
+        #game-modal-title { font-size: 15px; white-space: nowrap; }
+        #game-modal .notice-head-row { flex-wrap: wrap; row-gap: 4px; }
         #game-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--surface); }
 
         /* ==================== 印刷 ==================== */
@@ -1012,7 +1014,7 @@ permalink: /
                 <button id="game-modal-close" class="x" type="button" aria-label="閉じる"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
                 <div class="notice-head-row">
                     <h2 id="game-modal-title">マインスイーパー</h2>
-                    <button id="game-rank-btn" class="notice-push-btn" type="button">🏆 週間ランキング</button>
+                    <button id="game-rank-btn" class="notice-push-btn hidden" type="button">🏆 週間ランキング</button>
                 </div>
             </div>
             <div class="sheet-body" id="game-body"></div>
@@ -1972,7 +1974,7 @@ permalink: /
         const MS_NAME_KEY = 'ms-nickname';
         const MS_DEV_KEY = 'ms-device-id';
         const MS_LEVELS = ['初級', '中級', '上級'];
-        let rankState = { offset: 0, level: 0, note: '' };
+        let rankState = { offset: 0, level: 0, note: '', game: 'ms' };
         let rankDocs = [];
 
         function msDevice() {
@@ -2010,10 +2012,11 @@ permalink: /
         async function loadRankDocs() {
             if (!noticeDb) { rankDocs = []; return false; }
             try {
-                const snap = await noticeDb.collection('scores').where('week', '==', msWeekKey(rankState.offset)).limit(500).get();
+                const col = rankState.game === 'fm' ? 'fruitScores' : 'scores';
+                const snap = await noticeDb.collection(col).where('week', '==', msWeekKey(rankState.offset)).limit(500).get();
                 rankDocs = snap.docs.map(d => {
                     const v = d.data();
-                    return { docId: d.id, name: v.name || '', time: Number(v.time), level: Number(v.level), device: v.device || '' };
+                    return { docId: d.id, name: v.name || '', time: Number(v.time), score: Number(v.score), level: Number(v.level), device: v.device || '' };
                 });
                 return true;
             } catch (e) { rankDocs = []; return false; }
@@ -2024,18 +2027,28 @@ permalink: /
             const ok = await loadRankDocs();
             const me = msDevice();
             const best = new Map();
-            rankDocs.filter(d => d.level === rankState.level).forEach(d => {
-                const cur = best.get(d.device);
-                if (!cur || d.time < cur.time) best.set(d.device, d);
-            });
-            const rows = [...best.values()].sort((a, b) => a.time - b.time).slice(0, 10);
+            const isFm = rankState.game === 'fm';
+            let rows;
+            if (isFm) {
+                rankDocs.filter(d => d.score > 0).forEach(d => {
+                    const cur = best.get(d.device);
+                    if (!cur || d.score > cur.score) best.set(d.device, d);
+                });
+                rows = [...best.values()].sort((a, b) => b.score - a.score).slice(0, 10);
+            } else {
+                rankDocs.filter(d => d.level === rankState.level).forEach(d => {
+                    const cur = best.get(d.device);
+                    if (!cur || d.time < cur.time) best.set(d.device, d);
+                });
+                rows = [...best.values()].sort((a, b) => a.time - b.time).slice(0, 10);
+            }
             const medal = ['🥇', '🥈', '🥉'];
             const list = ok
                 ? (rows.length ? '<ol class="rank-list">' + rows.map((r, i) => `
                     <li class="rank-row${r.device === me ? ' me' : ''}">
                         <span class="rank-no">${medal[i] || (i + 1)}</span>
                         <span class="rank-name">${escapeHtml(r.name)}</span>
-                        <span class="rank-time">${r.time}秒</span>
+                        <span class="rank-time">${isFm ? r.score + '点' : r.time + '秒'}</span>
                         ${isAdmin ? `<button type="button" class="icon-btn" aria-label="記録を削除" data-rank-del="${escapeHtml(r.device)}">${icon('trash')}</button>` : ''}
                     </li>`).join('') + '</ol>' : '<p class="notice-empty">まだ記録がありません。クリアして一番乗りを目指そう！</p>')
                 : '<p class="notice-empty">ランキングを読み込めませんでした（通信を確認してください）</p>';
@@ -2044,9 +2057,9 @@ permalink: /
                     <button type="button" class="rank-tab${rankState.offset === 0 ? ' on' : ''}" data-rank-week="0">今週</button>
                     <button type="button" class="rank-tab${rankState.offset === -1 ? ' on' : ''}" data-rank-week="-1">先週</button>
                 </div>
-                <div class="rank-tabs">
+                ${isFm ? '' : `<div class="rank-tabs">
                     ${MS_LEVELS.map((n, i) => `<button type="button" class="rank-tab${rankState.level === i ? ' on' : ''}" data-rank-level="${i}">${n}</button>`).join('')}
-                </div>
+                </div>`}
                 <p class="rank-week">${msWeekLabel(rankState.offset)}（月曜〜日曜・毎週リセット）</p>
                 ${rankState.note ? `<p class="rank-week" style="color:var(--req);font-weight:700">${escapeHtml(rankState.note)}</p>` : ''}
                 ${list}
@@ -2083,17 +2096,41 @@ permalink: /
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 try { localStorage.setItem(localKey, String(time)); } catch (e) { /* 無視 */ }
-                rankState = { offset: 0, level: level, note: '🎉 ' + time + '秒でランキングに登録しました！' };
+                rankState = { offset: 0, level: level, note: '🎉 ' + time + '秒でランキングに登録しました！', game: 'ms' };
             } catch (e) {
-                rankState = { offset: 0, level: level, note: '登録できませんでした' + (e && e.code ? '（' + e.code + '）' : '') };
+                rankState = { offset: 0, level: level, note: '登録できませんでした' + (e && e.code ? '（' + e.code + '）' : ''), game: 'ms' };
+            }
+            showRanking();
+        }
+        async function handleFmOver(score) {
+            if (!Number.isInteger(score) || score < 1 || score > 100000) return;
+            if (!noticeDb) return;
+            const wk = msWeekKey(0);
+            const localKey = 'fm-wk-' + wk;
+            let prev = 0;
+            try { prev = Number(localStorage.getItem(localKey)) || 0; } catch (e) { /* 無視 */ }
+            if (prev && score <= prev) return; // 今週の自己ベストを更新したときだけ登録
+            let name = msName();
+            if (!name) name = msAskName('');
+            if (!name) return;
+            try {
+                await noticeDb.collection('fruitScores').add({
+                    name: name, score: score, week: wk, device: msDevice(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                try { localStorage.setItem(localKey, String(score)); } catch (e) { /* 無視 */ }
+                rankState = { offset: 0, level: 0, note: '🎉 ' + score + '点でランキングに登録しました！', game: 'fm' };
+            } catch (e) {
+                rankState = { offset: 0, level: 0, note: '登録できませんでした' + (e && e.code ? '（' + e.code + '）' : ''), game: 'fm' };
             }
             showRanking();
         }
         async function deleteRankDevice(device) {
             if (!noticeDb || !isAdmin) return;
-            if (!confirm('この人の、この週・この難易度の記録をすべて削除しますか？')) return;
-            const targets = rankDocs.filter(d => d.device === device && d.level === rankState.level);
-            try { await Promise.all(targets.map(d => noticeDb.collection('scores').doc(d.docId).delete())); }
+            if (!confirm('この人の、この週の記録をすべて削除しますか？（マインスイーパーは表示中の難易度のみ）')) return;
+            const isFm = rankState.game === 'fm';
+            const targets = rankDocs.filter(d => d.device === device && (isFm || d.level === rankState.level));
+            try { await Promise.all(targets.map(d => noticeDb.collection(isFm ? 'fruitScores' : 'scores').doc(d.docId).delete())); }
             catch (e) { alert(sharedErrText(e)); }
             renderRanking();
         }
@@ -2961,13 +2998,14 @@ permalink: /
             $('notice-modal-body').addEventListener('click', onChangesClick);
             setupWeekSwipe();
             initChampion();
-            $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '' }; showRanking(); } });
+            $('game-rank-btn').addEventListener('click', () => { if (isRankOpen()) hideRanking(); else { rankState = { offset: 0, level: rankState.level, note: '', game: rankState.game }; showRanking(); } });
             $('rank-panel').addEventListener('click', onRankClick);
             window.addEventListener('message', (e) => {
                 const f = document.getElementById('game-frame');
                 if (!f || e.source !== f.contentWindow) return;
                 const d = e.data;
                 if (d && d.type === 'ms-win') handleMsWin(Number(d.level), Number(d.time));
+                if (d && d.type === 'fm-over') handleFmOver(Number(d.score));
             });
             $('notice-modal-title').addEventListener('click', onNoticeTitleTap);
             document.addEventListener('keydown', onSecretKey);
@@ -3005,6 +3043,406 @@ permalink: /
         });
     </script>
 
+<script type="text/plain" id="fruit-src"><!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>くだもの合体パズル</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one-screen produce-stand game — score bar on top, wooden crate as the play field, evolution chain below */
+:root {
+  --bg: #dff0d8;
+  --bg2: #c9e4bd;
+  --ink: #2b3a22;
+  --muted: #5e7350;
+  --crate: #f3dcae;
+  --crate-edge: #b98a4c;
+  --accent: #e2453c;
+  --panel: #ffffffcc;
+  --font: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  background: radial-gradient(circle at 20% 0%, var(--bg) 0%, var(--bg2) 100%) fixed, var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px;
+  box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center;
+  user-select: none; -webkit-user-select: none;
+  overflow: hidden;
+}
+.wrap { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 0; }
+.bar { display: flex; align-items: stretch; gap: 8px; }
+.box {
+  background: var(--panel); border-radius: 14px; padding: 6px 12px;
+  display: flex; flex-direction: column; justify-content: center; min-width: 0;
+}
+.box .lab { font-size: 11px; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
+.box .val { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.score { flex: 1.4; }
+.best { flex: 1; }
+.next { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 6px; }
+#nextCv { width: 40px; height: 40px; }
+button {
+  font: inherit; font-weight: 800; border: 0; cursor: pointer; color: #fff;
+  background: var(--accent); border-radius: 999px; padding: 10px 22px; font-size: 16px;
+  box-shadow: 0 3px 0 #a52a23;
+}
+button:active { transform: translateY(2px); box-shadow: 0 1px 0 #a52a23; }
+button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.stage { position: relative; flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
+#cv { display: block; touch-action: none; border-radius: 6px 6px 16px 16px; max-width: 100%; }
+.over {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: #2b3a22b3; color: #fff; border-radius: 16px; text-align: center;
+}
+.over h2 { margin: 0; font-size: 30px; font-weight: 800; }
+.over p { margin: 0; font-size: 18px; font-variant-numeric: tabular-nums; }
+.chain { background: var(--panel); border-radius: 14px; padding: 6px 8px; }
+.chain .lab { font-size: 11px; color: var(--muted); letter-spacing: .08em; margin: 0 0 2px 4px; }
+#chainCv { width: 100%; height: 34px; display: block; }
+.hint { text-align: center; font-size: 12px; color: var(--muted); margin: 0; }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="box score"><span class="lab">スコア</span><span class="val" id="score">0</span></div>
+    <div class="box best"><span class="lab">ベスト</span><span class="val" id="best">0</span></div>
+    <div class="box next"><span class="lab">つぎ</span><canvas id="nextCv" width="80" height="80"></canvas></div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="over" id="over" hidden>
+      <h2>ゲームオーバー</h2>
+      <p id="final">スコア 0</p>
+      <button id="retry" type="button">もういちど</button>
+    </div>
+  </div>
+  <div class="chain">
+    <div class="lab">しんか（同じくだもの2つで次へ）</div>
+    <canvas id="chainCv"></canvas>
+  </div>
+  <p class="hint">左右に動かして、指をはなすと落ちます</p>
+</div>
+
+<script>
+(() => {
+const FRUITS = [
+  { name: "さくらんぼ", r: 13, c: "#d81f3c", s: "#8e0f24" },
+  { name: "いちご",     r: 18, c: "#f2475a", s: "#a8202f" },
+  { name: "ぶどう",     r: 25, c: "#8a4fc9", s: "#5a2c8f" },
+  { name: "デコポン",   r: 31, c: "#ffa62b", s: "#c7720a" },
+  { name: "かき",       r: 38, c: "#f2701c", s: "#b14a08" },
+  { name: "りんご",     r: 46, c: "#e7302a", s: "#a01a16" },
+  { name: "なし",       r: 54, c: "#f2e27a", s: "#bba737" },
+  { name: "もも",       r: 62, c: "#ffb8c6", s: "#e07a91" },
+  { name: "パイナップル", r: 72, c: "#f8cf2e", s: "#c39a0b" },
+  { name: "メロン",     r: 84, c: "#a6dc6a", s: "#5f9a2a" },
+  { name: "スイカ",     r: 98, c: "#2f9c3f", s: "#1b5e24" },
+];
+const SCORE = FRUITS.map((_, i) => (i + 1) * (i + 2) / 2);
+
+const W = 400, H = 600, FLOOR = H - 14, WALL = 14, TOPY = 54, LINE = 104;
+const G = 0.32, SUB = 4, ITER = 3;
+
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const nextCv = document.getElementById("nextCv"), nctx = nextCv.getContext("2d");
+const chainCv = document.getElementById("chainCv"), cctx = chainCv.getContext("2d");
+const scoreEl = document.getElementById("score"), bestEl = document.getElementById("best");
+const overEl = document.getElementById("over"), finalEl = document.getElementById("final");
+
+let fruits, score, cur, nxt, aimX, cooldown, dangerT, over, popFx, t0;
+let best = 0;
+try { best = +localStorage.getItem("fm-best") || 0; } catch (e) {}
+bestEl.textContent = best;
+
+const rnd = () => Math.floor(Math.random() * 5);
+
+function reset() {
+  fruits = []; score = 0; cur = rnd(); nxt = rnd(); aimX = W / 2;
+  cooldown = 0; dangerT = 0; over = false; popFx = [];
+  scoreEl.textContent = 0; overEl.hidden = true; drawNext();
+}
+
+function add(type, x, y) {
+  const f = { t: type, r: FRUITS[type].r, x, y, px: x, py: y, born: performance.now(), grow: 0, rot: Math.random() * 6.28 };
+  fruits.push(f); return f;
+}
+
+/* ---------- sizing ---------- */
+let scale = 1;
+function resize() {
+  const st = document.getElementById("stage");
+  const availW = st.clientWidth, availH = st.clientHeight;
+  scale = Math.min(availW / W, availH / H);
+  const dpr = window.devicePixelRatio || 1;
+  cv.style.width = W * scale + "px"; cv.style.height = H * scale + "px";
+  cv.width = Math.round(W * scale * dpr); cv.height = Math.round(H * scale * dpr);
+  ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  const cw = chainCv.clientWidth;
+  chainCv.width = cw * dpr; chainCv.height = 34 * dpr;
+  cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawChain(cw);
+}
+addEventListener("resize", resize);
+
+/* ---------- input ---------- */
+let holding = false;
+function toX(e) {
+  const b = cv.getBoundingClientRect();
+  return (e.clientX - b.left) / scale;
+}
+function clampAim(x) { const r = FRUITS[cur].r; return Math.max(WALL + r, Math.min(W - WALL - r, x)); }
+cv.addEventListener("pointerdown", e => { if (over) return; holding = true; cv.setPointerCapture(e.pointerId); aimX = toX(e); });
+cv.addEventListener("pointermove", e => { if (over) return; aimX = toX(e); });
+cv.addEventListener("pointerup", e => { if (over || !holding) return; holding = false; aimX = toX(e); drop(); });
+addEventListener("keydown", e => {
+  if (over) return;
+  if (e.key === "ArrowLeft") aimX -= 16;
+  else if (e.key === "ArrowRight") aimX += 16;
+  else if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); drop(); }
+});
+document.getElementById("retry").addEventListener("click", reset);
+
+function drop() {
+  if (cooldown > 0) return;
+  const x = clampAim(aimX);
+  add(cur, x, TOPY);
+  cur = nxt; nxt = rnd(); cooldown = 32; drawNext();
+}
+
+/* ---------- physics ---------- */
+function step() {
+  const g = G / SUB, MAXV = 9;
+  for (const f of fruits) f.r = FRUITS[f.t].r * (1 - f.grow * 0.5);
+  for (let s = 0; s < SUB; s++) {
+    for (const f of fruits) {
+      let vx = (f.x - f.px) * 0.992, vy = (f.y - f.py) * 0.992;
+      const sp = Math.hypot(vx, vy);
+      if (sp > MAXV) { vx *= MAXV / sp; vy *= MAXV / sp; }
+      f.px = f.x; f.py = f.y;
+      f.x += vx; f.y += vy + g;
+      f.rot += vx / f.r;
+      f.sx = f.x; f.sy = f.y; f.hit = false;
+    }
+    for (let it = 0; it < ITER; it++) {
+      const n = fruits.length;
+      for (let i = 0; i < n; i++) {
+        const a = fruits[i];
+        for (let j = i + 1; j < n; j++) {
+          const b = fruits[j];
+          const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r;
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= rr * rr || d2 === 0) continue;
+          const d = Math.sqrt(d2), ov = Math.min(rr - d, 4) / d;
+          const ma = a.r * a.r, mb = b.r * b.r, k = ov / (ma + mb) * 0.5;
+          a.x -= dx * k * mb; a.y -= dy * k * mb;
+          b.x += dx * k * ma; b.y += dy * k * ma;
+          a.hit = b.hit = true;
+        }
+      }
+      for (const f of fruits) {
+        if (f.x < WALL + f.r) { f.x = WALL + f.r; f.px = f.x; f.hit = true; }
+        if (f.x > W - WALL - f.r) { f.x = W - WALL - f.r; f.px = f.x; f.hit = true; }
+        if (f.y > FLOOR - f.r) {
+          f.y = FLOOR - f.r; f.py = f.y;
+          f.px += (f.x - f.px) * 0.2; f.hit = true;
+        }
+      }
+    }
+    // 押し戻した分の大半を速度にしない（反発をおさえる）
+    for (const f of fruits) {
+      f.px += (f.x - f.sx) * 0.85;
+      f.py += (f.y - f.sy) * 0.85;
+      if (f.hit) { f.px += (f.x - f.px) * 0.04; f.py += (f.y - f.py) * 0.02; }
+    }
+    merge();
+  }
+}
+
+function merge() {
+  for (let i = 0; i < fruits.length; i++) {
+    const a = fruits[i];
+    for (let j = i + 1; j < fruits.length; j++) {
+      const b = fruits[j];
+      if (a.t !== b.t) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r + 1.5;
+      if (dx * dx + dy * dy > rr * rr) continue;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      fruits.splice(j, 1); fruits.splice(i, 1);
+      score += SCORE[a.t];
+      if (a.t < FRUITS.length - 1) {
+        const nf = add(a.t + 1, mx, my); nf.grow = 0.6;
+      } else {
+        score += 100;
+      }
+      popFx.push({ x: mx, y: my, r: FRUITS[a.t].r, c: FRUITS[a.t].c, life: 1 });
+      scoreEl.textContent = score;
+      if (score > best) { best = score; bestEl.textContent = best; try { localStorage.setItem("fm-best", best); } catch (e) {} }
+      i = -1; break;
+    }
+  }
+}
+
+function checkOver() {
+  const now = performance.now();
+  let danger = false;
+  for (const f of fruits) {
+    if (now - f.born > 1200 && f.y - f.r < LINE) { danger = true; break; }
+  }
+  dangerT = danger ? dangerT + 1 : Math.max(0, dangerT - 2);
+  if (dangerT > 120) {
+    over = true; finalEl.textContent = "スコア " + score; overEl.hidden = false;
+    try { parent.postMessage({ type: "fm-over", score: score }, "*"); } catch (e) {}
+  }
+}
+
+/* ---------- drawing ---------- */
+function fruitPath(c, f, x, y, r, rot) {
+  const F = FRUITS[f];
+  c.save(); c.translate(x, y);
+  // body
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2);
+  c.fillStyle = F.c; c.fill();
+  c.lineWidth = Math.max(1.5, r * 0.07); c.strokeStyle = F.s; c.stroke();
+  c.save(); c.rotate(rot);
+  c.beginPath(); c.arc(0, 0, r - c.lineWidth / 2, 0, Math.PI * 2); c.clip();
+  if (f === 10 || f === 9) {
+    // stripes / net
+    c.strokeStyle = f === 10 ? "#123f18" : "#e6f5c8"; c.lineWidth = f === 10 ? r * 0.12 : r * 0.03;
+    const n = f === 10 ? 5 : 7;
+    for (let i = -n; i <= n; i++) {
+      c.beginPath();
+      const ox = i * r * (f === 10 ? 0.42 : 0.3);
+      c.moveTo(ox, -r); c.bezierCurveTo(ox + r * 0.25, -r * 0.3, ox - r * 0.25, r * 0.3, ox, r);
+      c.stroke();
+      if (f === 9) { c.beginPath(); c.moveTo(-r, ox); c.bezierCurveTo(-r * 0.3, ox + r * 0.2, r * 0.3, ox - r * 0.2, r, ox); c.stroke(); }
+    }
+  } else if (f === 8) {
+    c.strokeStyle = "#a87a06"; c.lineWidth = r * 0.04;
+    for (let i = -4; i <= 4; i++) {
+      c.beginPath(); c.moveTo(i * r * 0.4 - r, -r); c.lineTo(i * r * 0.4 + r, r); c.stroke();
+      c.beginPath(); c.moveTo(i * r * 0.4 + r, -r); c.lineTo(i * r * 0.4 - r, r); c.stroke();
+    }
+  } else if (f === 1) {
+    c.fillStyle = "#ffe9a0";
+    for (let i = 0; i < 9; i++) { const a = i * 2.4, d = r * 0.55 * ((i % 3) / 3 + 0.4); c.beginPath(); c.ellipse(Math.cos(a) * d, Math.sin(a) * d, r * 0.06, r * 0.1, a, 0, 6.28); c.fill(); }
+  } else if (f === 2) {
+    c.fillStyle = "#ffffff33";
+    for (let i = 0; i < 6; i++) { const a = i * 1.047; c.beginPath(); c.arc(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55, r * 0.3, 0, 6.28); c.fill(); }
+  } else if (f === 6) {
+    c.fillStyle = "#c9b44a66";
+    for (let i = 0; i < 14; i++) { const a = i * 2.2, d = r * ((i * 37) % 10) / 12; c.beginPath(); c.arc(Math.cos(a) * d, Math.sin(a) * d, r * 0.04, 0, 6.28); c.fill(); }
+  } else if (f === 7) {
+    c.strokeStyle = "#e07a9166"; c.lineWidth = r * 0.06;
+    c.beginPath(); c.moveTo(0, -r); c.quadraticCurveTo(r * 0.25, 0, 0, r); c.stroke();
+  }
+  c.restore();
+  // shine
+  c.beginPath(); c.ellipse(-r * 0.38, -r * 0.42, r * 0.22, r * 0.13, -0.6, 0, 6.28);
+  c.fillStyle = "#ffffff8c"; c.fill();
+  // stem / leaf
+  if (f !== 10 && f !== 9 && f !== 2) {
+    c.strokeStyle = "#5b3a1a"; c.lineWidth = Math.max(1.5, r * 0.07); c.lineCap = "round";
+    c.beginPath(); c.moveTo(0, -r * 0.92); c.quadraticCurveTo(r * 0.05, -r * 1.15, r * 0.18, -r * 1.25); c.stroke();
+    c.fillStyle = f === 8 ? "#4f9a2e" : "#58b13a";
+    c.beginPath(); c.ellipse(r * 0.28, -r * 1.05, r * 0.2, r * 0.09, -0.5, 0, 6.28); c.fill();
+  }
+  // face
+  if (r > 16) {
+    c.fillStyle = f === 10 ? "#fff" : "#2b1d14";
+    const e = r * 0.075;
+    c.beginPath(); c.arc(-r * 0.22, r * 0.02, e, 0, 6.28); c.arc(r * 0.22, r * 0.02, e, 0, 6.28); c.fill();
+    c.strokeStyle = c.fillStyle; c.lineWidth = Math.max(1.2, r * 0.045);
+    c.beginPath(); c.arc(0, r * 0.12, r * 0.12, 0.2, Math.PI - 0.2); c.stroke();
+  }
+  c.restore();
+}
+
+function drawCrate() {
+  // back
+  ctx.fillStyle = "#f8ead0"; ctx.fillRect(WALL, 0, W - WALL * 2, FLOOR);
+  ctx.strokeStyle = "#ead3a6"; ctx.lineWidth = 1;
+  for (let y = 40; y < FLOOR; y += 46) { ctx.beginPath(); ctx.moveTo(WALL, y); ctx.lineTo(W - WALL, y); ctx.stroke(); }
+  // danger line
+  const flash = dangerT > 0 && Math.floor(performance.now() / 180) % 2 === 0;
+  ctx.setLineDash([8, 7]); ctx.lineWidth = 2;
+  ctx.strokeStyle = dangerT > 0 ? (flash ? "#e2453c" : "#e2453c55") : "#b98a4c66";
+  ctx.beginPath(); ctx.moveTo(WALL, LINE); ctx.lineTo(W - WALL, LINE); ctx.stroke(); ctx.setLineDash([]);
+  // walls
+  ctx.fillStyle = "#d9b06d";
+  ctx.fillRect(0, 0, WALL, H); ctx.fillRect(W - WALL, 0, WALL, H); ctx.fillRect(0, FLOOR, W, H - FLOOR);
+  ctx.fillStyle = "#b98a4c";
+  ctx.fillRect(WALL - 3, 0, 3, FLOOR); ctx.fillRect(W - WALL, 0, 3, FLOOR); ctx.fillRect(WALL - 3, FLOOR, W - WALL * 2 + 6, 3);
+  ctx.fillStyle = "#8a6230";
+  ctx.font = "800 9px " + getComputedStyle(document.body).fontFamily;
+  ctx.textAlign = "center"; ctx.fillText("FRESH FRUIT · 産地直送", W / 2, H - 3);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawCrate();
+  // aim guide + held fruit
+  if (!over) {
+    const x = clampAim(aimX), r = FRUITS[cur].r;
+    ctx.strokeStyle = "#b98a4c55"; ctx.lineWidth = 2; ctx.setLineDash([2, 6]);
+    ctx.beginPath(); ctx.moveTo(x, TOPY + r); ctx.lineTo(x, FLOOR); ctx.stroke(); ctx.setLineDash([]);
+    if (cooldown <= 0) fruitPath(ctx, cur, x, TOPY, r, 0);
+  }
+  for (const f of fruits) {
+    fruitPath(ctx, f.t, f.x, f.y, f.r, f.rot);
+  }
+  for (const p of popFx) {
+    ctx.globalAlpha = p.life;
+    ctx.strokeStyle = p.c; ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const a = i * 0.785, d1 = p.r * (1.6 - p.life * 0.6), d2 = d1 + 7;
+      ctx.beginPath(); ctx.moveTo(p.x + Math.cos(a) * d1, p.y + Math.sin(a) * d1); ctx.lineTo(p.x + Math.cos(a) * d2, p.y + Math.sin(a) * d2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawNext() {
+  nctx.clearRect(0, 0, 80, 80);
+  const r = FRUITS[nxt].r, s = 28 / Math.max(r, 18);
+  nctx.save(); nctx.translate(40, 44); nctx.scale(s, s);
+  fruitPath(nctx, nxt, 0, 0, r, 0); nctx.restore();
+}
+
+function drawChain(w) {
+  cctx.clearRect(0, 0, w, 34);
+  const n = FRUITS.length, slot = w / n;
+  for (let i = 0; i < n; i++) {
+    const r = 5 + i * 1.05;
+    fruitPath(cctx, i, slot * (i + 0.5), 19, Math.min(r, slot / 2 - 1), 0);
+  }
+}
+
+/* ---------- loop ---------- */
+function loop() {
+  if (!over) {
+    step();
+    for (const f of fruits) if (f.grow > 0) f.grow = Math.max(0, f.grow - 0.04);
+    if (cooldown > 0) cooldown--;
+    checkOver();
+  }
+  for (const p of popFx) p.life -= 0.05;
+  popFx = popFx.filter(p => p.life > 0);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+reset();
+resize();
+if (document.fonts) document.fonts.ready.then(resize);
+requestAnimationFrame(loop);
+})();
+<\/script>
+
+</body></html></script>
 <script type="text/plain" id="game-src"><!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -3180,7 +3618,7 @@ init();
 </html>
 </script>
 <script>
-/* 隠しコマンド: 「現在コマ強調」を10回切り替えるとマインスイーパーが開く */
+/* 隠しコマンド: 「現在コマ強調」を10回切り替えるとマインスイーパー、区分の「選択」を10回押すとくだもの合体パズルが開く */
 (function () {
     const toggle = document.getElementById('toggle-highlight');
     const modal = document.getElementById('game-modal');
@@ -3189,12 +3627,19 @@ init();
     const NEED = 10, GAP_MS = 5000;
     let count = 0, last = 0;
 
-    function openGame() {
-        if (!body.firstChild) {
-            const f = document.createElement('iframe');
-            f.id = 'game-frame';
+    const SCRIPT_END = /<\\\/script>/g;
+    let curGame = null;
+    function startGame(kind) {
+        body.innerHTML = '';
+        const f = document.createElement('iframe');
+        f.id = 'game-frame';
+        let gsrc;
+        if (kind === 'fm') {
+            f.title = 'くだもの合体パズル';
+            gsrc = document.getElementById('fruit-src').textContent.replace(SCRIPT_END, '<' + '/script>');
+        } else {
             f.title = 'マインスイーパー';
-            let gsrc = document.getElementById('game-src').textContent.replace(/<\\\/script>/g, '<' + '/script>');
+            gsrc = document.getElementById('game-src').textContent.replace(SCRIPT_END, '<' + '/script>');
             try {
                 if (champActiveToday()) {
                     gsrc = gsrc.split("e.textContent='🚩'").join("e.textContent='👑'")
@@ -3202,14 +3647,23 @@ init();
                         .replace('<h1>マインスイーパー</h1>', '<h1>マインスイーパー</h1><div style="font-size:13px;font-weight:800;color:#a06c00;margin:-4px 0 0">👑 ' + champSummary() + '</div>');
                 }
             } catch (e) { /* 無視 */ }
-            f.srcdoc = gsrc;
-            body.appendChild(f);
         }
+        f.srcdoc = gsrc;
+        body.appendChild(f);
+        curGame = kind;
+        rankState = { offset: 0, level: rankState.level, note: '', game: kind };
+        try { hideRanking(); } catch (e) { /* 無視 */ }
+        document.getElementById('game-modal-title').textContent = kind === 'fm' ? 'くだもの合体パズル' : 'マインスイーパー';
+        document.getElementById('game-rank-btn').classList.remove('hidden');
+    }
+    function openGame(kind) {
+        startGame(kind || 'ms');
         modal.classList.remove('hidden');
     }
     function closeGame() {
         modal.classList.add('hidden');
         body.innerHTML = ''; // 閉じたらゲームを破棄（タイマーも止まる）
+        curGame = null;
         try { hideRanking(); } catch (e) { /* 無視 */ }
     }
 
@@ -3217,8 +3671,19 @@ init();
         const now = Date.now();
         count = (now - last > GAP_MS) ? 1 : count + 1;
         last = now;
-        if (count >= NEED) { count = 0; openGame(); }
+        if (count >= NEED) { count = 0; openGame('ms'); }
     });
+    // 区分の「選択」ボタンを10回押すと、くだもの合体パズルが開く
+    const elecBtn = document.querySelector('#category-filter [data-value="ELECTIVE"]');
+    if (elecBtn) {
+        let fc = 0, fl = 0;
+        elecBtn.addEventListener('click', () => {
+            const now = Date.now();
+            fc = (now - fl > GAP_MS) ? 1 : fc + 1;
+            fl = now;
+            if (fc >= NEED) { fc = 0; openGame('fm'); }
+        });
+    }
     document.getElementById('game-modal-close').addEventListener('click', closeGame);
     modal.addEventListener('click', e => { if (e.target === modal) closeGame(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeGame(); });
